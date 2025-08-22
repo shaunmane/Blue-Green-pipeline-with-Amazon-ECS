@@ -1,7 +1,11 @@
 name: Terraform Plan
 
 on:
-  - pull_request
+  push:
+    branches:
+      - master
+      - dev
+      - uat
 
 permissions:
   id-token: write   # This is required for requesting the JWT
@@ -69,39 +73,18 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
-      - name: Terraform Format
-        id: fmt
-        run: |
-          terraform fmt -check -recursive -diff
-        continue-on-error: true
-      - name: Terraform Fmt
-        id: fmt_and_commit
-        run: |
-          terraform fmt -recursive
-      - name: Auto Commit Changes
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "style: Terraform fmt"
-          file_pattern: "*.tf"
-          commit_user_name: "github-actions[bot]"
       - name: Terraform Init
         id: init
         run: |
           terraform init -lock=false -input=false -backend-config="key=bluegreen-${{github.base_ref}}.tfstate"
-      - name: Terraform Validate
-        id: validate
-        run: |
-          terraform validate
       - name: Terraform Plan
         id: plan
         run: |
-          terraform plan -lock=false -input=false |& tee tf_plan.txt
-      - name: Post TF Plan Comment
-        uses: GetTerminus/terraform-pr-commenter@v3
-        with:
-          commenter_type: plan
-          commenter_plan_path: tf_plan.txt
-          commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
+          terraform plan -lock=false -input=false 
+      - name: Terraform Apply
+        id: apply
+        run: |
+          terraform apply -input=false -auto-approve tfplan
 
   stop-runner:
     timeout-minutes: 2
