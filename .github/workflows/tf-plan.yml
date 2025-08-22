@@ -10,19 +10,16 @@ on:
 permissions:
   id-token: write   # This is required for requesting the JWT
   contents: read    # This is required for actions/checkout
+  pull-requests: write # Required to post comments
       
 jobs:
-  code_scanning:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
   start-runner:
     timeout-minutes: 5
     name: Start self-hosted EC2 runner
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
+    env:
+      AWS_ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/ECR_OIDC
+      AWS_REGION: ${{ vars.AWS_REGION }}
     outputs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
       ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
@@ -30,19 +27,20 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/ECR_OIDC
-          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_ROLE }}
+          role-session-name: github-ec2-session-start
+          aws-region: ${{ env.AWS_REGION }}
       - name: Start EC2 runner
         id: start-ec2-runner
         uses: machulav/ec2-github-runner@v2
         with:
           mode: start
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          ec2-image-id: ami-123
-          ec2-instance-type: t3.nano
-          subnet-id: subnet-123
-          security-group-id: sg-123
-          iam-role-name: my-role-name # optional, requires additional permissions
+          ec2-image-id: ${{ secrets.GH_RUNNER_AMI }}
+          ec2-instance-type: t3.micro
+          subnet-id: ${{ secrets.AWS_SUBNET_ID }}
+          security-group-id: ${{ secrets.AWS_SG }}
+          iam-role-name: ${{ env.AWS_ROLE }} # optional, requires additional permissions
           aws-resource-tags: > # optional, requires additional permissions
             [
               {"Key": "Name", "Value": "ec2-github-runner"},
@@ -54,7 +52,10 @@ jobs:
     needs: start-runner 
     runs-on: ${{ needs.start-runner.outputs.label }} 
     env:
-      TF_VAR_AWSROLE: 
+      GITHUB_TOKEN: ${{ github.token }}
+      AWS_ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/ECR_OIDC
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      TF_VERSION: ${{ vars.TF_VERSION }}
     steps:
       - name: Checkout Repo
         run: actions/checkout@v4
@@ -65,12 +66,46 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-iam-role: ${{secrets.AWS_ROLE }}
-          aws-region: us-east-1
-      - name: Terraform Commands
+          role-to-assume: ${{ env.AWS_ROLE }}
+          role-session-name: github-ec2-session-start
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      - name: Terraform Format
+        id: fmt
         run: |
-          $terraform fmt
-          terraform init 
+          terraform fmt -check -recursive -diff
+        continue-on-error: true
+      - name: Terraform Fmt
+        id: fmt_and_commit
+        run: |
+          terraform fmt -recursive
+      - name: Auto Commit Changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: Terraform fmt"
+          file_pattern: "*.tf"
+          commit_user_name: "github-actions[bot]"
+      - name: Terraform Init
+        id: init
+        run: |
+          terraform init -lock=false -input=false -backend-config="key=bluegreen-${{github.base_ref}}.tfstate"
+      - name: Terraform Validate
+        id: validate
+        run: |
+          terraform validate
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -lock=false -input=false |& tee tf_plan.txt
+      - name: Post TF Plan Comment
+        uses: GetTerminus/terraform-pr-commenter@v3
+        with:
+          commenter_type: plan
+          commenter_plan_path: tf_plan.txt
+          commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
 
   stop-runner:
     timeout-minutes: 2
@@ -79,14 +114,17 @@ jobs:
       - start-runner 
       - terraform
     runs-on: ubuntu-latest
+    env:
+      AWS_ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/ECR_OIDC
+      AWS_REGION: ${{ vars.AWS_REGION }}
     if: ${{ always() }} # required to stop the runner even if the error happened in the previous jobs
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_ROLE }}
+          role-session-name: github-ec2-session-start
+          aws-region: ${{ env.AWS_REGION }}
       - name: Stop EC2 runner
         uses: machulav/ec2-github-runner@v2
         with:
@@ -94,3 +132,4 @@ jobs:
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
           label: ${{ needs.start-runner.outputs.label }}
           ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
+          
