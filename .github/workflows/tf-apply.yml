@@ -3,7 +3,7 @@ name: Terraform Plan
 on:
   push:
     branches:
-      - master
+      - main
       - dev
       - uat
 
@@ -80,7 +80,7 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
-          terraform plan -lock=false -input=false 
+          terraform plan -lock=false -input=false -out=tfplan
       - name: Terraform Apply
         id: apply
         run: |
