@@ -17,7 +17,6 @@ jobs:
         working-dir: terraform/
         output-file: README.md
         output-method: inject
-        args: --sort-by-required
-        indention: 3
+        recursive: "true"
         git-push: "true"
         git-commit-message: "terraform-docs: automated action"
