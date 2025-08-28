@@ -1,11 +1,10 @@
 name: Terraform Plan
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-      - uat
+#  push:
+#    branches:
+#      - main
+#      - dev
 
 permissions:
   id-token: write   # This is required for requesting the JWT
