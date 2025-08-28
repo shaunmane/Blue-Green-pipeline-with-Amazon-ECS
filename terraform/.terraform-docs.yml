@@ -18,12 +18,9 @@ content: |-
 
   {{ .Inputs }}
 
-  {{ .Modules }}  
-
   {{ .Outputs }}
 
   {{ .Resources }}
-
 
 output:
   file: "README.md"
