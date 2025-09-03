@@ -1,0 +1,8 @@
+jq
+python3
+java-11-amazon-corretto.x86_64
+pip3
+boto3
+docker
+node
+npm
