@@ -17,3 +17,8 @@ variable "public_subnet_cidrs" {
   description = "CIDR ranges for the private subnets"
   type = list()
 }
+
+variable "aws_region" {
+  description = "Region used for the services"
+  type = string 
+}
