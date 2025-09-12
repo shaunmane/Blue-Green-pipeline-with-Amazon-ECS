@@ -10,9 +10,11 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "value"
-    region = "value"
-    dynamodb_table = "value"
+    bucket = aws_s3_bucket.tf_state.name
+    key = "/terraform.tfstate"
+    region = var.aws_region
+    use_lockfile = true
+    encrypt = true
   }
 }
 
