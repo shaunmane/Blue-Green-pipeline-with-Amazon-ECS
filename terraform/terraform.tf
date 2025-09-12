@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source = "hashicorp/aws"
-      version = "~> 5.98.0"
+      version = "6.13.0"
     }
     random = {
       source = "hashicorp/random"
@@ -14,4 +14,8 @@ terraform {
     region = "value"
     dynamodb_table = "value"
   }
+}
+
+provider "aws" {
+  region = var.aws_region
 }
