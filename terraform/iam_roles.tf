@@ -1,12 +1,12 @@
 # Task Execution Role
 resource "aws_iam_role" "ecsTaskExecutionRole" {
-  name = "ecsTaskExecutionRole"
+  name               = "ecsTaskExecutionRole"
   assume_role_policy = file("${path.module}/iam_roles/AmazonECSTaskExecutionRolePolicy.json")
 }
 
 # ECS Container Instance Role
 resource "aws_iam_role" "ecsInstanceRole" {
-  name = "ecsInstanceRole"
+  name               = "ecsInstanceRole"
   assume_role_policy = file("${path.module}/iam_roles/AmazonEC2ContainerServiceforEC2Role.json")
 }
 

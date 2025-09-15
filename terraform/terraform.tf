@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     aws = {
-      source = "hashicorp/aws"
+      source  = "hashicorp/aws"
       version = "6.13.0"
     }
     random = {
@@ -10,11 +10,11 @@ terraform {
   }
 
   backend "s3" {
-    bucket = aws_s3_bucket.tf_state.name
-    key = "/terraform.tfstate"
-    region = var.aws_region
+    bucket       = aws_s3_bucket.tf_state.name
+    key          = "/terraform.tfstate"
+    region       = var.aws_region
     use_lockfile = true
-    encrypt = true
+    encrypt      = true
   }
 }
 
