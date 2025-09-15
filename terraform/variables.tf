@@ -22,3 +22,8 @@ variable "aws_region" {
   description = "Region used for the services"
   type        = string
 }
+
+variable "repo_name" {
+  description = "Name of the container repository"
+  type        = string
+}
