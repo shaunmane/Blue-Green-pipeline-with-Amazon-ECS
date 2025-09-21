@@ -14,3 +14,7 @@ data "aws_subnets" "default_vpc_subnets" {
     values = [var.vpc_id]
   }
 }
+
+data "http" "my_ip" {
+  url = "https://api.ipify.org"
+}

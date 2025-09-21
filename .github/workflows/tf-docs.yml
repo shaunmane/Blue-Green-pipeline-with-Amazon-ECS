@@ -21,6 +21,6 @@ jobs:
         working-dir: ./terraform
         output-file: README.md
         output-method: inject
-        recursive: "true"
+        recursive: "false"
         git-push: "true"
         git-commit-message: "terraform-docs: automated action"
