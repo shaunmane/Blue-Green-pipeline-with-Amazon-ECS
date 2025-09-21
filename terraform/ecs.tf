@@ -1,123 +1,60 @@
-module "ecs" {
-  source  = "terraform-aws-modules/ecs/aws"
-  version = "6.0.5"
+resource "aws_ecs_cluster" "tripmgmt_cluster" {
+  name = "ecs-cluster-tripmgmtdemo"
 
-  cluster_name = "ecs-ec2"
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
+}
 
-  cluster_configuration = {
-    execute_command_configuration = {
-      logging = "OVERRIDE"
-      log_configuration = {
-        cloud_watch_log_group_name = "/aws/ecs/aws-ec2"
-      }
-    }
+resource "aws_ecs_cluster_capacity_providers" "example" {
+  cluster_name = aws_ecs_cluster.tripmgmt_cluster.name 
+
+  capacity_providers = ["FARGATE"]
+
+  default_capacity_provider_strategy {
+    base              = 1
+    weight            = 100
+    capacity_provider = "FARGATE"
+  }
+}
+
+resource "aws_autoscaling_group" "ecs_asg" {
+  name                      = "ecs-tripmgmt-asg"
+  min_size                  = 2
+  max_size                  = 4
+  health_check_grace_period = 300
+  health_check_type         = "ELB"
+  desired_capacity          = 4
+  force_delete              = true
+  placement_group           = aws_placement_group.test.id
+  launch_configuration      = aws_launch_configuration.foobar.name
+  vpc_zone_identifier       = [aws_subnet.example1.id, aws_subnet.example2.id]
+
+  instance_maintenance_policy {
+    min_healthy_percentage = 90
+    max_healthy_percentage = 120
   }
 
-  # Cluster capacity providers
-  default_capacity_provider_strategy = {
-    FARGATE = {
-      weight = 50
-      base   = 20
-    }
-    FARGATE_SPOT = {
-      weight = 50
-    }
+  tag {
+    key                 = "AmazonECSManaged"
+    value               = true
+    propagate_at_launch = true
   }
+}
 
-  services = {
-    ecsdemo-frontend = {
-      cpu    = 1024
-      memory = 4096
+resource "aws_ecs_capacity_provider" "example" {
+  name = "example"
 
-      # Container definition(s)
-      container_definitions = {
+  auto_scaling_group_provider {
+    auto_scaling_group_arn         = aws_autoscaling_group.example.arn
+    managed_termination_protection = "ENABLED"
 
-        fluent-bit = {
-          cpu       = 512
-          memory    = 1024
-          essential = true
-          image     = "906394416424.dkr.ecr.us-west-2.amazonaws.com/aws-for-fluent-bit:stable"
-          firelensConfiguration = {
-            type = "fluentbit"
-          }
-          memoryReservation = 50
-        }
-
-        ecs-sample = {
-          cpu       = 512
-          memory    = 1024
-          essential = true
-          image     = "public.ecr.aws/aws-containers/ecsdemo-frontend:776fd50"
-          portMappings = [
-            {
-              name          = "ecs-sample"
-              containerPort = 80
-              protocol      = "tcp"
-            }
-          ]
-
-          # Example image used requires access to write to root filesystem
-          readonlyRootFilesystem = false
-
-          dependsOn = [{
-            containerName = "fluent-bit"
-            condition     = "START"
-          }]
-
-          enable_cloudwatch_logging = false
-          logConfiguration = {
-            logDriver = "awsfirelens"
-            options = {
-              Name                    = "firehose"
-              region                  = "eu-west-1"
-              delivery_stream         = "my-stream"
-              log-driver-buffer-limit = "2097152"
-            }
-          }
-          memoryReservation = 100
-        }
-      }
-
-      service_connect_configuration = {
-        namespace = "example"
-        service = {
-          client_alias = {
-            port     = 80
-            dns_name = "ecs-sample"
-          }
-          port_name      = "ecs-sample"
-          discovery_name = "ecs-sample"
-        }
-      }
-
-      load_balancer = {
-        service = {
-          target_group_arn = "arn:aws:elasticloadbalancing:eu-west-1:1234567890:targetgroup/bluegreentarget1/209a844cd01825a4"
-          container_name   = "ecs-sample"
-          container_port   = 80
-        }
-      }
-
-      subnet_ids = ["subnet-abcde012", "subnet-bcde012a", "subnet-fghi345a"]
-      security_group_ingress_rules = {
-        alb_3000 = {
-          description                  = "Service port"
-          from_port                    = local.container_port
-          ip_protocol                  = "tcp"
-          referenced_security_group_id = "sg-12345678"
-        }
-      }
-      security_group_egress_rules = {
-        all = {
-          ip_protocol = "-1"
-          cidr_ipv4   = "0.0.0.0/0"
-        }
-      }
+    managed_scaling {
+      maximum_scaling_step_size = 1000
+      minimum_scaling_step_size = 1
+      status                    = "ENABLED"
+      target_capacity           = 10
     }
-  }
-
-  tags = {
-    Environment = "Development"
-    Project     = "Example"
   }
 }
