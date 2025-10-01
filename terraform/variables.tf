@@ -56,3 +56,15 @@ variable "db_instance" {
   type        = string
   default     = "db.t4g.medium"
 }
+
+variable "ami_id" {
+  description = "DB instance type"
+  type        = string
+  default     = "ami-0c02fb55956c7d316"
+}
+
+variable "ec2_instance" {
+  description = "ECS asg instance type"
+  type        = string
+  default     = "t3.large"
+}

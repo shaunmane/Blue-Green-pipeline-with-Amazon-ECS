@@ -7,7 +7,75 @@ resource "aws_ecs_cluster" "tripmgmt_cluster" {
   }
 }
 
-resource "aws_ecs_cluster_capacity_providers" "example" {
+resource "aws_iam_instance_profile" "ecs_instance_profile" {
+  name = "ecsInstanceProfile"
+  role = aws_iam_role.ecsInstanceRole.name
+}
+
+# Launch Template (defines what each EC2 instance looks like)
+resource "aws_launch_template" "asg_lt" {
+  name_prefix   = "asg-lt-"
+  image_id      = var.ami_id 
+  instance_type = var.ec2_instance
+
+  iam_instance_profile {
+    name = aws_iam_instance_profile.ecs_instance_profile.name
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_autoscaling_group" "ecs_asg" {
+  name                      = "ecs-tripmgmt-asg"
+  desired_capacity     = 2
+  max_size             = 4
+  min_size             = 2
+  vpc_zone_identifier  = data.aws_subnets.default_vpc_subnets.ids
+
+  launch_template {
+    id      = aws_launch_template.ecs_lt.id
+    version = "$Latest"
+  }
+
+  tag {
+    key                 = "Name"
+    value               = "ecs-asg-instance"
+    propagate_at_launch = true
+  }
+}
+
+resource "aws_ecs_capacity_provider" "asg_cp" {
+  name = "ec2-capacity-provider"
+
+  auto_scaling_group_provider {
+    auto_scaling_group_arn         = aws_autoscaling_group.ecs_asg.arn
+    managed_termination_protection = "ENABLED"
+
+    managed_scaling {
+      maximum_scaling_step_size = 2
+      minimum_scaling_step_size = 1
+      status                    = "ENABLED"
+      target_capacity           = 75
+    }
+  }
+}
+
+# Attach Capacity Provider to ECS Cluster 
+resource "aws_ecs_cluster_capacity_providers" "ecs_cp_attach" {
+  cluster_name       = aws_ecs_cluster.tripmgmt_cluster.name 
+  
+  capacity_providers = [aws_ecs_capacity_provider.asg_cp.name]
+
+  default_capacity_provider_strategy {
+    capacity_provider = aws_ecs_capacity_provider.asg_cp.name
+    weight            = 1
+  }
+}
+
+/*
+resource "aws_ecs_cluster_capacity_providers" "fargate_cp" {
   cluster_name = aws_ecs_cluster.tripmgmt_cluster.name 
 
   capacity_providers = ["FARGATE"]
@@ -18,54 +86,31 @@ resource "aws_ecs_cluster_capacity_providers" "example" {
     capacity_provider = "FARGATE"
   }
 }
+*/
 
-# Launch Template (defines what each EC2 instance looks like)
-resource "aws_launch_template" "example" {
-  name_prefix   = "asg-example-"
-  image_id      = "ami-0c02fb55956c7d316" 
-  instance_type = "t3.micro"
+# Security Group for EC2 Container Instance
+resource "aws_security_group" "ecs_container_sg" {
+  name        = "ECS-ALB-SecurityGroup"
+  description = "Allow access to Trip Management Monolith Application."
+  vpc_id      = var.vpc_id
 
-  lifecycle {
-    create_before_destroy = true
+  tags = {
+    Name = "alb_sg"
   }
 }
 
-resource "aws_autoscaling_group" "ecs_asg" {
-  name                      = "ecs-tripmgmt-asg"
-  min_size                  = 2
-  max_size                  = 4
-  health_check_grace_period = 300
-  health_check_type         = "ELB"
-  desired_capacity          = 4
-  force_delete              = true
-  placement_group           = aws_placement_group.test.id
-  launch_configuration      = aws_launch_configuration.foobar.name
-  vpc_zone_identifier       = [aws_subnet.example1.id, aws_subnet.example2.id]
-
-  instance_maintenance_policy {
-    min_healthy_percentage = 90
-    max_healthy_percentage = 120
-  }
-
-  tag {
-    key                 = "AmazonECSManaged"
-    value               = true
-    propagate_at_launch = true
-  }
+resource "aws_vpc_security_group_ingress_rule" "allow_80_port_ec2" {
+  security_group_id = aws_security_group.ecs_container_sg.id
+  cidr_ipv4         = ["${chomp(data.http.my_ip.response_body)}/32"]
+  from_port         = 80
+  ip_protocol       = "tcp"
+  to_port           = 80
 }
 
-resource "aws_ecs_capacity_provider" "example" {
-  name = "example"
-
-  auto_scaling_group_provider {
-    auto_scaling_group_arn         = aws_autoscaling_group.example.arn
-    managed_termination_protection = "ENABLED"
-
-    managed_scaling {
-      maximum_scaling_step_size = 1000
-      minimum_scaling_step_size = 1
-      status                    = "ENABLED"
-      target_capacity           = 10
-    }
-  }
+resource "aws_vpc_security_group_ingress_rule" "allow_8080_port_ec2" {
+  security_group_id = aws_security_group.ecs_container_sg.id
+  cidr_ipv4         = ["${chomp(data.http.my_ip.response_body)}/32"]
+  from_port         = 8080
+  ip_protocol       = "tcp"
+  to_port           = 8080
 }
