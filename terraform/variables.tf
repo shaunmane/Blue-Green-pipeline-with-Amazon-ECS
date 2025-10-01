@@ -57,9 +57,14 @@ variable "db_instance" {
   default     = "db.t4g.medium"
 }
 
-variable "db_master_password" {
-  description = "Masterpassword for my Aurora DB"
+variable "ami_id" {
+  description = "DB instance type"
   type        = string
-  sensitive   = true
+  default     = "ami-0c02fb55956c7d316"
 }
 
+variable "ec2_instance" {
+  description = "ECS asg instance type"
+  type        = string
+  default     = "t3.large"
+}

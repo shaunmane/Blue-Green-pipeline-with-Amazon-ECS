@@ -29,13 +29,30 @@ resource "aws_rds_subnet_group" "aurora_subnet_group" {
   }
 }
 
+# Generate a random password
+resource "random_password" "db_password" {
+  length           = 16
+  special          = true
+  override_special = "_%@"
+}
+
+# Store password in SSM Parameter Store
+resource "aws_ssm_parameter" "aurora_password" {
+  name        = "/app/secure/password"
+  description = "Randomly generated password for Aurora DB"
+  type        = "SecureString"
+  value       = random_password.db_password.result
+  overwrite   = true
+}
+
+
 # Aurora PostgreSQL cluster
 resource "aws_rds_cluster" "aurora_postgres" {
   cluster_identifier     = "tripmgmtdb-cluster"
   engine                 = var.engine
   engine_version         = var.aurora_engine_version
   master_username        = "admin"
-  master_password        = var.db_master_password
+  master_password        = random_password.db_password.result
   database_name          = "tripmgmt"
   skip_final_snapshot    = true
   vpc_security_group_ids = [aws_security_group.aurora_sg.id]
