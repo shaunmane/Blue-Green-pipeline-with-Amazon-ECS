@@ -56,10 +56,3 @@ variable "db_instance" {
   type        = string
   default     = "db.t4g.medium"
 }
-
-variable "db_master_password" {
-  description = "Masterpassword for my Aurora DB"
-  type        = string
-  sensitive   = true
-}
-

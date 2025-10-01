@@ -19,6 +19,17 @@ resource "aws_ecs_cluster_capacity_providers" "example" {
   }
 }
 
+# Launch Template (defines what each EC2 instance looks like)
+resource "aws_launch_template" "example" {
+  name_prefix   = "asg-example-"
+  image_id      = "ami-0c02fb55956c7d316" 
+  instance_type = "t3.micro"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
 resource "aws_autoscaling_group" "ecs_asg" {
   name                      = "ecs-tripmgmt-asg"
   min_size                  = 2
