@@ -12,7 +12,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket       = aws_s3_bucket.tf_state.name
+    bucket       = "ecs-workshop-tf-state-bucket"
     key          = "ecs-project/terraform.tfstate"
     region       = "us-east-1"
     use_lockfile = true
@@ -21,5 +21,5 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region
+  region = "us-east-1"
 }
