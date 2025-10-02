@@ -150,7 +150,7 @@ resource "aws_ecs_task_definition" "tripmgmt" {
         },
         {
           name  = "SPRING_DATASOURCE_URL"
-          value = "jdbc:postgresql://${var.aurora_pgsql_rds_url}:5432/tripmgmt"
+          value = "jdbc:postgresql://${aws_rds_cluster.aurora_postgres.endpoint}:5432/tripmgmt"
         },
         {
           name  = "SPRING_DATASOURCE_USERNAME"
@@ -158,7 +158,7 @@ resource "aws_ecs_task_definition" "tripmgmt" {
         },
         {
           name  = "SPRING_DATASOURCE_PASSWORD"
-          value = var.db_password
+          value = random_password.db_password.result
         },
         {
           name  = "SPRING_PROFILES_ACTIVE"
@@ -169,7 +169,7 @@ resource "aws_ecs_task_definition" "tripmgmt" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = var.log_group
+          awslogs-group         = aws_cloudwatch_log_group.ecs_logs.name
           awslogs-region        = var.aws_region
           awslogs-stream-prefix = "awslogs-tripmgmtdemo-ecstask"
         }

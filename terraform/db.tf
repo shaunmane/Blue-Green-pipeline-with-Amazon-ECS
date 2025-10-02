@@ -51,7 +51,7 @@ resource "aws_rds_cluster" "aurora_postgres" {
   cluster_identifier     = "tripmgmtdb-cluster"
   engine                 = var.engine
   engine_version         = var.aurora_engine_version
-  master_username        = "admin"
+  master_username        = var.db_username
   master_password        = random_password.db_password.result
   database_name          = "tripmgmt"
   skip_final_snapshot    = true

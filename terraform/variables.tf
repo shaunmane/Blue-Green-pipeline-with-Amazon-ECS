@@ -51,6 +51,11 @@ variable "aurora_engine_version" {
   default     = "14.5"
 }
 
+variable "db_username" {
+  description = "Username for my db"
+  type        = string
+  default     = "admin"
+}
 variable "db_instance" {
   description = "DB instance type"
   type        = string

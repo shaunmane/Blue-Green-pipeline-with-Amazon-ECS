@@ -17,7 +17,7 @@ resource "aws_ecr_repository" "tripmgmtdemo" {
 resource "docker_image" "tripmgmt" {
   name = "${aws_ecr_repository.tripmgmtdemo.repository_url}:latest"
   build {
-    context    = "${path.module}/tripmgmt"  
+    context    = "${path.module}/tripmgmt"
     dockerfile = "Dockerfile"
   }
 }
