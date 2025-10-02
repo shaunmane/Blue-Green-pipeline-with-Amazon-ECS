@@ -15,7 +15,7 @@ resource "aws_iam_instance_profile" "ecs_instance_profile" {
 # Launch Template (defines what each EC2 instance looks like)
 resource "aws_launch_template" "asg_lt" {
   name_prefix   = "asg-lt-"
-  image_id      = var.ami_id 
+  image_id      = var.ami_id
   instance_type = var.ec2_instance
 
   iam_instance_profile {
@@ -28,11 +28,11 @@ resource "aws_launch_template" "asg_lt" {
 }
 
 resource "aws_autoscaling_group" "ecs_asg" {
-  name                      = "ecs-tripmgmt-asg"
-  desired_capacity     = 2
-  max_size             = 4
-  min_size             = 2
-  vpc_zone_identifier  = data.aws_subnets.default_vpc_subnets.ids
+  name                = "ecs-tripmgmt-asg"
+  desired_capacity    = 2
+  max_size            = 4
+  min_size            = 2
+  vpc_zone_identifier = data.aws_subnets.default_vpc_subnets.ids
 
   launch_template {
     id      = aws_launch_template.ecs_lt.id
@@ -64,8 +64,8 @@ resource "aws_ecs_capacity_provider" "asg_cp" {
 
 # Attach Capacity Provider to ECS Cluster 
 resource "aws_ecs_cluster_capacity_providers" "ecs_cp_attach" {
-  cluster_name       = aws_ecs_cluster.tripmgmt_cluster.name 
-  
+  cluster_name = aws_ecs_cluster.tripmgmt_cluster.name
+
   capacity_providers = [aws_ecs_capacity_provider.asg_cp.name]
 
   default_capacity_provider_strategy {
