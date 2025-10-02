@@ -114,3 +114,67 @@ resource "aws_vpc_security_group_ingress_rule" "allow_8080_port_ec2" {
   ip_protocol       = "tcp"
   to_port           = 8080
 }
+
+resource "aws_ecs_task_definition" "tripmgmt" {
+  family                   = "task-tripmgmt-demo"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["EC2"]
+  cpu                      = "1024"
+  memory                   = "2048"
+  execution_role_arn       = aws_iam_role.ecsTaskExecutionRole.arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "cntr-img-tripmgmt"
+      image     = docker_registry_image.tripmgmt.name
+      essential = true
+
+      entryPoint = []
+
+      portMappings = [
+        {
+          containerPort = 8080
+          hostPort      = 8080
+          protocol      = "tcp"
+        }
+      ]
+
+      environment = [
+        {
+          name  = "JAVA_OPTS"
+          value = "-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses"
+        },
+        {
+          name  = "JHIPSTER_SLEEP"
+          value = "0"
+        },
+        {
+          name  = "SPRING_DATASOURCE_URL"
+          value = "jdbc:postgresql://${var.aurora_pgsql_rds_url}:5432/tripmgmt"
+        },
+        {
+          name  = "SPRING_DATASOURCE_USERNAME"
+          value = var.db_username
+        },
+        {
+          name  = "SPRING_DATASOURCE_PASSWORD"
+          value = var.db_password
+        },
+        {
+          name  = "SPRING_PROFILES_ACTIVE"
+          value = "prod,swagger"
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = var.log_group
+          awslogs-region        = var.aws_region
+          awslogs-stream-prefix = "awslogs-tripmgmtdemo-ecstask"
+        }
+        secretOptions = []
+      }
+    }
+  ])
+}
