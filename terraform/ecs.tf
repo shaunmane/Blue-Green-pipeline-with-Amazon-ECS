@@ -15,7 +15,7 @@ resource "aws_iam_instance_profile" "ecs_instance_profile" {
 # Launch Template (defines what each EC2 instance looks like)
 resource "aws_launch_template" "asg_lt" {
   name_prefix   = "asg-lt-"
-  image_id      = var.ami_id 
+  image_id      = var.ami_id
   instance_type = var.ec2_instance
 
   iam_instance_profile {
@@ -28,11 +28,11 @@ resource "aws_launch_template" "asg_lt" {
 }
 
 resource "aws_autoscaling_group" "ecs_asg" {
-  name                      = "ecs-tripmgmt-asg"
-  desired_capacity     = 2
-  max_size             = 4
-  min_size             = 2
-  vpc_zone_identifier  = data.aws_subnets.default_vpc_subnets.ids
+  name                = "ecs-tripmgmt-asg"
+  desired_capacity    = 2
+  max_size            = 4
+  min_size            = 2
+  vpc_zone_identifier = data.aws_subnets.default_vpc_subnets.ids
 
   launch_template {
     id      = aws_launch_template.ecs_lt.id
@@ -64,8 +64,8 @@ resource "aws_ecs_capacity_provider" "asg_cp" {
 
 # Attach Capacity Provider to ECS Cluster 
 resource "aws_ecs_cluster_capacity_providers" "ecs_cp_attach" {
-  cluster_name       = aws_ecs_cluster.tripmgmt_cluster.name 
-  
+  cluster_name = aws_ecs_cluster.tripmgmt_cluster.name
+
   capacity_providers = [aws_ecs_capacity_provider.asg_cp.name]
 
   default_capacity_provider_strategy {
@@ -113,4 +113,68 @@ resource "aws_vpc_security_group_ingress_rule" "allow_8080_port_ec2" {
   from_port         = 8080
   ip_protocol       = "tcp"
   to_port           = 8080
+}
+
+resource "aws_ecs_task_definition" "tripmgmt" {
+  family                   = "task-tripmgmt-demo"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["EC2"]
+  cpu                      = "1024"
+  memory                   = "2048"
+  execution_role_arn       = aws_iam_role.ecsTaskExecutionRole.arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "cntr-img-tripmgmt"
+      image     = docker_registry_image.tripmgmt.name
+      essential = true
+
+      entryPoint = []
+
+      portMappings = [
+        {
+          containerPort = 8080
+          hostPort      = 8080
+          protocol      = "tcp"
+        }
+      ]
+
+      environment = [
+        {
+          name  = "JAVA_OPTS"
+          value = "-Djava.net.preferIPv4Stack=true -Djava.net.preferIPv4Addresses"
+        },
+        {
+          name  = "JHIPSTER_SLEEP"
+          value = "0"
+        },
+        {
+          name  = "SPRING_DATASOURCE_URL"
+          value = "jdbc:postgresql://${aws_rds_cluster.aurora_postgres.endpoint}:5432/tripmgmt"
+        },
+        {
+          name  = "SPRING_DATASOURCE_USERNAME"
+          value = var.db_username
+        },
+        {
+          name  = "SPRING_DATASOURCE_PASSWORD"
+          value = random_password.db_password.result
+        },
+        {
+          name  = "SPRING_PROFILES_ACTIVE"
+          value = "prod,swagger"
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = aws_cloudwatch_log_group.ecs_logs.name
+          awslogs-region        = var.aws_region
+          awslogs-stream-prefix = "awslogs-tripmgmtdemo-ecstask"
+        }
+        secretOptions = []
+      }
+    }
+  ])
 }

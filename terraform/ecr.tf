@@ -13,3 +13,15 @@ resource "aws_ecr_repository" "tripmgmtdemo" {
   }
 }
 
+# Build and Push the Docker Image
+resource "docker_image" "tripmgmt" {
+  name = "${aws_ecr_repository.tripmgmtdemo.repository_url}:latest"
+  build {
+    context    = "${path.module}/tripmgmt"
+    dockerfile = "Dockerfile"
+  }
+}
+
+resource "docker_registry_image" "tripmgmt" {
+  name = docker_image.tripmgmt.name
+}
