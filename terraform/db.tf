@@ -20,7 +20,7 @@ resource "aws_security_group" "aurora_sg" {
 }
 
 # Subnet group for Aurora
-resource "aws_rds_subnet_group" "aurora_subnet_group" {
+resource "aws_db_subnet_group" "aurora_subnet_group" {
   name       = "aurora-subnet-group"
   subnet_ids = [var.subnets["us-east-1a"], var.subnets["us-east-1b"]]
 
@@ -45,7 +45,6 @@ resource "aws_ssm_parameter" "aurora_password" {
   overwrite   = true
 }
 
-
 # Aurora PostgreSQL cluster
 resource "aws_rds_cluster" "aurora_postgres" {
   cluster_identifier     = "tripmgmtdb-cluster"
@@ -56,7 +55,7 @@ resource "aws_rds_cluster" "aurora_postgres" {
   database_name          = "tripmgmt"
   skip_final_snapshot    = true
   vpc_security_group_ids = [aws_security_group.aurora_sg.id]
-  db_subnet_group_name   = aws_rds_subnet_group.aurora_subnet_group.name
+  db_subnet_group_name   = aws_db_subnet_group.aurora_subnet_group.name
 }
 
 # Aurora cluster instances (at least one required)
@@ -68,5 +67,5 @@ resource "aws_rds_cluster_instance" "aurora_postgres_instance" {
   engine               = aws_rds_cluster.aurora_postgres.engine
   engine_version       = aws_rds_cluster.aurora_postgres.engine_version
   publicly_accessible  = false
-  db_subnet_group_name = aws_rds_subnet_group.aurora_subnet_group.name
+  db_subnet_group_name = aws_db_subnet_group.aurora_subnet_group.name
 }

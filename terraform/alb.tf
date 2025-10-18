@@ -36,7 +36,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_80_port" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_8080_port" {
   security_group_id = aws_security_group.alb_sg.id
-  cidr_ipv4         = ["${chomp(data.http.my_ip.response_body)}/32"]
+  cidr_ipv4         = "${chomp(data.http.my_ip.response_body)}/32"
   from_port         = 8080
   ip_protocol       = "tcp"
   to_port           = 8080

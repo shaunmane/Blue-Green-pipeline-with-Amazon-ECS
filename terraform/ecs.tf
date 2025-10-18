@@ -199,23 +199,24 @@ resource "aws_ecs_service" "tripmgmt_svc" {
 
   network_configuration {
     subnets = [
-      var.subnets_map["us-east-1a"],
-      var.subnets_map["us-east-1b"],
-      var.subnets_map["us-east-1c"]
+      var.subnets["us-east-1a"],
+      var.subnets["us-east-1b"],
+      var.subnets["us-east-1c"]
     ]
-    security_groups  = aws_autoscaling_group.ecs_container_sg.id
-    assign_public_ip = "DISABLED"
+    security_groups  = [aws_security_group.ecs_container_sg.id]
   }
 
   deployment_configuration {
     strategy = "BLUE_GREEN"
   }
-
+  
+  /*
   advanced_configuration {
     alternate_target_group_arn = aws_lb_target_group.alb_target_8080.arn
     production_listener_rule   = aws_lb_listener.port_80_listener.arn
     role_arn                   = aws_iam_role.ecsInstanceRole.arn
   }
+  */
 
   sigint_rollback       = true
   wait_for_steady_state = true
