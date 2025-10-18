@@ -26,6 +26,7 @@
 | <a name="input_aurora_engine_version"></a> [aurora\_engine\_version](#input\_aurora\_engine\_version) | Engine version for aurora db | `string` | `"14.5"` | no |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Region used for the services | `string` | n/a | yes |
 | <a name="input_azs_use1"></a> [azs\_use1](#input\_azs\_use1) | Availability Zones for the region | `list(string)` | n/a | yes |
+| <a name="input_container_name"></a> [container\_name](#input\_container\_name) | Container name for the esc service | `string` | `"cntr-img-tripmgmt"` | no |
 | <a name="input_db_instance"></a> [db\_instance](#input\_db\_instance) | DB instance type | `string` | `"db.t4g.medium"` | no |
 | <a name="input_db_username"></a> [db\_username](#input\_db\_username) | Username for my db | `string` | `"admin"` | no |
 | <a name="input_ec2_instance"></a> [ec2\_instance](#input\_ec2\_instance) | ECS asg instance type | `string` | `"t3.large"` | no |
@@ -51,6 +52,7 @@ No outputs.
 | [aws_ecs_capacity_provider.asg_cp](https://registry.terraform.io/providers/hashicorp/aws/6.13.0/docs/resources/ecs_capacity_provider) | resource |
 | [aws_ecs_cluster.tripmgmt_cluster](https://registry.terraform.io/providers/hashicorp/aws/6.13.0/docs/resources/ecs_cluster) | resource |
 | [aws_ecs_cluster_capacity_providers.ecs_cp_attach](https://registry.terraform.io/providers/hashicorp/aws/6.13.0/docs/resources/ecs_cluster_capacity_providers) | resource |
+| [aws_ecs_service.tripmgmt_svc](https://registry.terraform.io/providers/hashicorp/aws/6.13.0/docs/resources/ecs_service) | resource |
 | [aws_ecs_task_definition.tripmgmt](https://registry.terraform.io/providers/hashicorp/aws/6.13.0/docs/resources/ecs_task_definition) | resource |
 | [aws_iam_instance_profile.ecs_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/6.13.0/docs/resources/iam_instance_profile) | resource |
 | [aws_iam_role.ecsInstanceRole](https://registry.terraform.io/providers/hashicorp/aws/6.13.0/docs/resources/iam_role) | resource |
