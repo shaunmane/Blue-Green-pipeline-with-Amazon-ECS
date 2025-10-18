@@ -35,7 +35,7 @@ resource "aws_autoscaling_group" "ecs_asg" {
   vpc_zone_identifier = data.aws_subnets.default_vpc_subnets.ids
 
   launch_template {
-    id      = aws_launch_template.ecs_lt.id
+    id      = aws_launch_template.asg_lt.id
     version = "$Latest"
   }
 
@@ -101,7 +101,7 @@ resource "aws_security_group" "ecs_container_sg" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_80_port_ec2" {
   security_group_id = aws_security_group.ecs_container_sg.id
-  cidr_ipv4         = ["${chomp(data.http.my_ip.response_body)}/32"]
+  cidr_ipv4         = "${chomp(data.http.my_ip.response_body)}/32"
   from_port         = 80
   ip_protocol       = "tcp"
   to_port           = 80
@@ -109,7 +109,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_80_port_ec2" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_8080_port_ec2" {
   security_group_id = aws_security_group.ecs_container_sg.id
-  cidr_ipv4         = ["${chomp(data.http.my_ip.response_body)}/32"]
+  cidr_ipv4         = "${chomp(data.http.my_ip.response_body)}/32"
   from_port         = 8080
   ip_protocol       = "tcp"
   to_port           = 8080
