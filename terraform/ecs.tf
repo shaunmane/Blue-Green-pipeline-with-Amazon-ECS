@@ -35,7 +35,7 @@ resource "aws_autoscaling_group" "ecs_asg" {
   vpc_zone_identifier = data.aws_subnets.default_vpc_subnets.ids
 
   launch_template {
-    id      = aws_launch_template.ecs_lt.id
+    id      = aws_launch_template.asg_lt.id
     version = "$Latest"
   }
 
@@ -101,7 +101,7 @@ resource "aws_security_group" "ecs_container_sg" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_80_port_ec2" {
   security_group_id = aws_security_group.ecs_container_sg.id
-  cidr_ipv4         = ["${chomp(data.http.my_ip.response_body)}/32"]
+  cidr_ipv4         = "${chomp(data.http.my_ip.response_body)}/32"
   from_port         = 80
   ip_protocol       = "tcp"
   to_port           = 80
@@ -109,7 +109,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_80_port_ec2" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_8080_port_ec2" {
   security_group_id = aws_security_group.ecs_container_sg.id
-  cidr_ipv4         = ["${chomp(data.http.my_ip.response_body)}/32"]
+  cidr_ipv4         = "${chomp(data.http.my_ip.response_body)}/32"
   from_port         = 8080
   ip_protocol       = "tcp"
   to_port           = 8080
@@ -199,23 +199,24 @@ resource "aws_ecs_service" "tripmgmt_svc" {
 
   network_configuration {
     subnets = [
-      var.subnets_map["us-east-1a"],
-      var.subnets_map["us-east-1b"],
-      var.subnets_map["us-east-1c"]
+      var.subnets["us-east-1a"],
+      var.subnets["us-east-1b"],
+      var.subnets["us-east-1c"]
     ]
-    security_groups  = aws_autoscaling_group.ecs_container_sg.id
-    assign_public_ip = "DISABLED"
+    security_groups  = [aws_security_group.ecs_container_sg.id]
   }
 
   deployment_configuration {
     strategy = "BLUE_GREEN"
   }
-
+  
+  /*
   advanced_configuration {
     alternate_target_group_arn = aws_lb_target_group.alb_target_8080.arn
     production_listener_rule   = aws_lb_listener.port_80_listener.arn
     role_arn                   = aws_iam_role.ecsInstanceRole.arn
   }
+  */
 
   sigint_rollback       = true
   wait_for_steady_state = true

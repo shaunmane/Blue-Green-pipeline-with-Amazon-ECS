@@ -6,11 +6,6 @@ resource "aws_ecr_repository" "tripmgmtdemo" {
   image_scanning_configuration {
     scan_on_push = true
   }
-
-  #Uses the default AWS managed key for ECR.
-  encryption_configuration {
-    encryption_type = KMS
-  }
 }
 
 # Build and Push the Docker Image
