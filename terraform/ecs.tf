@@ -178,3 +178,45 @@ resource "aws_ecs_task_definition" "tripmgmt" {
     }
   ])
 }
+
+resource "aws_ecs_service" "tripmgmt_svc" {
+  name            = "tripmgmt-svc"
+  cluster         = aws_ecs_cluster.tripmgmt_cluster.id
+  task_definition = aws_ecs_task_definition.tripmgmt.arn
+  desired_count   = 2
+  depends_on      = [aws_iam_role.ecsTaskExecutionRole]
+
+  ordered_placement_strategy {
+    type  = "binpack"
+    field = "cpu"
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.alb_target_80.arn
+    container_name   = var.container_name
+    container_port   = 8080
+  }
+
+  network_configuration {
+    subnets = [
+      var.subnets_map["us-east-1a"],
+      var.subnets_map["us-east-1b"],
+      var.subnets_map["us-east-1c"]
+    ]
+    security_groups  = aws_autoscaling_group.ecs_container_sg.id
+    assign_public_ip = "DISABLED"
+  }
+
+  deployment_configuration {
+    strategy = "BLUE_GREEN"
+  }
+
+  advanced_configuration {
+    alternate_target_group_arn = aws_lb_target_group.alb_target_8080.arn
+    production_listener_rule   = aws_lb_listener.port_80_listener.arn
+    role_arn                   = aws_iam_role.ecsInstanceRole.arn
+  }
+
+  sigint_rollback       = true
+  wait_for_steady_state = true
+}

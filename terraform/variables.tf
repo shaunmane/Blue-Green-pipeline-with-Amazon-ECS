@@ -73,3 +73,9 @@ variable "ec2_instance" {
   type        = string
   default     = "t3.large"
 }
+
+variable "container_name" {
+  description = "Container name for the esc service"
+  type        = string
+  default     = "cntr-img-tripmgmt"
+}
