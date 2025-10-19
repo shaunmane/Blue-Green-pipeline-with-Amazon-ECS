@@ -1,0 +1,63 @@
+name: Terraform Plan
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  id-token: write   # This is required for requesting the JWT
+  contents: read    # This is required for actions/checkout
+  pull-requests: write # Required to post comments
+      
+jobs:
+  terraform:
+    name: Terrafom 
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      AWS_ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/ECR_OIDC
+      AWS_REGION: ${{ vars.AWS_REGION }}
+      TF_VERSION: ${{ vars.TF_VERSION }}
+    steps:
+      - name: Checkout Repo
+        run: actions/checkout@v4
+      - name: Setup Terraform 
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE }}
+          role-session-name: session-start
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Terraform Format
+        id: fmt
+        run: |
+          terraform fmt -check -recursive -diff
+        continue-on-error: true
+      - name: Auto Commit Changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: Terraform fmt"
+          file_pattern: "*.tf"
+          commit_user_name: "github-actions[bot]"
+      - name: Terraform Init
+        id: init
+        run: |
+          terraform init
+      - name: Terraform Validate
+        id: validate
+        run: |
+          terraform validate
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan -lock=false -input=false |& tee tf_plan.txt
+      - name: Post TF Plan Comment
+        uses: GetTerminus/terraform-pr-commenter@v3
+        with:
+          commenter_type: plan
+          commenter_plan_path: tf_plan.txt
+          commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
