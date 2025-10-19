@@ -22,7 +22,6 @@ jobs:
           PR_BODY="${{ github.event.pull_request.body }}"
           # Use grep with a regex pattern to find the tag (e.g., [tag:v1.0.0])
           TAG=$(echo "$PR_BODY" | grep -oP '\[tag:\K[^\]]+')
-          
           if [ -z "$TAG" ]; then
             echo "::notice title=Skipping Tagging::No [tag:vX.Y.Z] found in the PR description. Skipping tag creation."
             echo "tag_name=" >> $GITHUB_OUTPUT
@@ -35,11 +34,8 @@ jobs:
         run: |
           TAG_NAME="${{ steps.extract_tag.outputs.tag_name }}"
           echo "Creating Git tag: $TAG_NAME"
-          
           # Create the tag locally on the merged commit
           git tag $TAG_NAME
-          
           # Push the new tag to GitHub
-          git push origin $TAG_NAME
-          
+          git push origin $TAG_NAME  
           echo "Successfully tagged commit with $TAG_NAME"
