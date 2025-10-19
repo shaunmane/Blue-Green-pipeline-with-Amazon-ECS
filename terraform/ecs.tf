@@ -203,13 +203,13 @@ resource "aws_ecs_service" "tripmgmt_svc" {
       var.subnets["us-east-1b"],
       var.subnets["us-east-1c"]
     ]
-    security_groups  = [aws_security_group.ecs_container_sg.id]
+    security_groups = [aws_security_group.ecs_container_sg.id]
   }
 
   deployment_configuration {
     strategy = "BLUE_GREEN"
   }
-  
+
   /*
   advanced_configuration {
     alternate_target_group_arn = aws_lb_target_group.alb_target_8080.arn

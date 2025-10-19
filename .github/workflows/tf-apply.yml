@@ -10,21 +10,41 @@ permissions:
   contents: read    # This is required for actions/checkout
   pull-requests: write # Required to post comments
       
+env:
+  GITHUB_TOKEN: ${{ github.token }}
+  AWS_ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/ECR_OIDC
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  TF_VERSION: ${{ vars.TF_VERSION }}
+
 jobs:
-  terraform:
-    name: Terrafom 
-    runs-on: ubuntu-latest 
-    env:
-      GITHUB_TOKEN: ${{ github.token }}
-      AWS_ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/ECR_OIDC
-      AWS_REGION: ${{ vars.AWS_REGION }}
-      TF_VERSION: ${{ vars.TF_VERSION }}
+  init:
+    name: Init 
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0 
+          role-to-assume: ${{ env.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Setup Terraform 
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      - name: Terraform Init
+        id: init
+        working-directory: ./terraform
+        run: |
+          terraform init
+
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    needs: init 
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -35,17 +55,42 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
       - name: Terraform Init
-        id: init
         working-directory: ./terraform
-        run: |
-          terraform init -lock=false -input=false 
+        run: terraform init
       - name: Terraform Plan
-        id: plan
         working-directory: ./terraform
-        run: |
-          terraform plan -lock=false -input=false -out=tfplan
+        run: terraform plan -var-file="terraform.tfvars" -out=tfplan
+      - name: Upload Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: ./terraform/tfplan
+
+  apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: plan
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+      - name: Download Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: ./terraform
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
       - name: Terraform Apply
-        id: apply
         working-directory: ./terraform
-        run: |
-          terraform apply -input=false -auto-approve tfplan
+        run: terraform apply -auto-approve tfplan
