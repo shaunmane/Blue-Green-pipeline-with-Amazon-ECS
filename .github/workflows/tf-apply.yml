@@ -36,13 +36,16 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
       - name: Terraform Init
         id: init
+        working-directory: ./terraform
         run: |
           terraform init -lock=false -input=false 
       - name: Terraform Plan
         id: plan
+        working-directory: ./terraform
         run: |
           terraform plan -lock=false -input=false -out=tfplan
       - name: Terraform Apply
         id: apply
+        working-directory: ./terraform
         run: |
           terraform apply -input=false -auto-approve tfplan
