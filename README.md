@@ -18,7 +18,7 @@ The workshop guides participants through the process of setting up a robust and 
 
 ### Services Used
 
-- **AWS IAM**: 
+- **AWS IAM**: For permissions to allow a role to execute the infrastructure code.
 - **Amazon ECS**: 
 - **Amazon EC2**: 
 - **Amazon Aurora**: 

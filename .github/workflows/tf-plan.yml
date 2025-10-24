@@ -15,6 +15,7 @@ env:
   AWS_ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/ECR_OIDC
   AWS_REGION: ${{ vars.AWS_REGION }}
   TF_VERSION: ${{ vars.TF_VERSION }}
+  WORKING_DIR: ./terraform 
 
 jobs:
   validate:
@@ -37,7 +38,7 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
       - name: Terraform Format
         id: fmt
-        working-directory: ./terraform
+        working-directory: ${{ env.WORKING_DIR }}
         run: |
           terraform fmt -check -recursive -diff
         continue-on-error: true
@@ -49,12 +50,12 @@ jobs:
           commit_user_name: "github-actions[bot]"
       - name: Terraform Init
         id: init
-        working-directory: ./terraform
+        working-directory: ${{ env.WORKING_DIR }}
         run: |
           terraform init
       - name: Terraform Validate
         id: validate
-        working-directory: ./terraform
+        working-directory: ${{ env.WORKING_DIR }}
         run: |
           terraform validate
 
@@ -75,13 +76,13 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
       - name: Terraform Init
-        working-directory: ./terraform
+        working-directory: ${{ env.WORKING_DIR }}
         run: terraform init
       - name: Terraform Plan
-        working-directory: ./terraform
+        working-directory: ${{ env.WORKING_DIR }}
         run: terraform plan -var-file="terraform.tfvars" -out=tfplan
       - name: Upload Plan
         uses: actions/upload-artifact@v4
         with:
           name: tfplan
-          path: ./terraform/tfplan
+          path: ${{ env.WORKING_DIR }}/tfplan
