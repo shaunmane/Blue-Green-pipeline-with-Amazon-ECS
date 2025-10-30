@@ -1,7 +1,8 @@
 # AWS DevOps Blue/Green Pipeline Workshop (Terraform IaC)
 
-[![Terraform Plan](https://github.com/shaunmane/Blue-Green-pipeline-with-Amazon-ECS/actions/workflows/tf-plan.yml/badge.svg)](https://github.com/shaunmane/Blue-Green-pipeline-with-Amazon-ECS/actions/workflows/tf-plan.yml)
-[![Terraform Apply](https://github.com/shaunmane/Blue-Green-pipeline-with-Amazon-ECS/actions/workflows/tf-apply.yml/badge.svg)](https://github.com/shaunmane/Blue-Green-pipeline-with-Amazon-ECS/actions/workflows/tf-apply.yml)
+[![Terraform Plan](https://github.com/shaunmane/Blue-Green-pipeline-with-Amazon-ECS/actions/workflows/tf-plan.yml/badge.svg?event=pull_request)](https://github.com/shaunmane/Blue-Green-pipeline-with-Amazon-ECS/actions/workflows/tf-plan.yml)
+
+[![Terraform Apply](https://github.com/shaunmane/Blue-Green-pipeline-with-Amazon-ECS/actions/workflows/tf-apply.yml/badge.svg?branch=main)](https://github.com/shaunmane/Blue-Green-pipeline-with-Amazon-ECS/actions/workflows/tf-apply.yml)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
