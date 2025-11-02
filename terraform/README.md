@@ -22,15 +22,15 @@
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_ami_id"></a> [ami\_id](#input\_ami\_id) | DB instance type | `string` | `"ami-0c02fb55956c7d316"` | no |
-| <a name="input_aurora_engine_version"></a> [aurora\_engine\_version](#input\_aurora\_engine\_version) | Engine version for aurora db | `string` | `"14.5"` | no |
+| <a name="input_ami_id"></a> [ami\_id](#input\_ami\_id) | DB instance type | `string` | n/a | yes |
+| <a name="input_aurora_engine_version"></a> [aurora\_engine\_version](#input\_aurora\_engine\_version) | Engine version for aurora db | `string` | n/a | yes |
 | <a name="input_aws_region"></a> [aws\_region](#input\_aws\_region) | Region used for the services | `string` | n/a | yes |
 | <a name="input_azs_use1"></a> [azs\_use1](#input\_azs\_use1) | Availability Zones for the region | `list(string)` | n/a | yes |
-| <a name="input_container_name"></a> [container\_name](#input\_container\_name) | Container name for the esc service | `string` | `"cntr-img-tripmgmt"` | no |
-| <a name="input_db_instance"></a> [db\_instance](#input\_db\_instance) | DB instance type | `string` | `"db.t4g.medium"` | no |
-| <a name="input_db_username"></a> [db\_username](#input\_db\_username) | Username for my db | `string` | `"admin"` | no |
-| <a name="input_ec2_instance"></a> [ec2\_instance](#input\_ec2\_instance) | ECS asg instance type | `string` | `"t3.large"` | no |
-| <a name="input_engine"></a> [engine](#input\_engine) | Engine type for the db | `string` | `"aurora-postgresql"` | no |
+| <a name="input_container_name"></a> [container\_name](#input\_container\_name) | Container name for the esc service | `string` | n/a | yes |
+| <a name="input_db_instance"></a> [db\_instance](#input\_db\_instance) | DB instance type | `string` | n/a | yes |
+| <a name="input_db_username"></a> [db\_username](#input\_db\_username) | Username for my db | `string` | n/a | yes |
+| <a name="input_ec2_instance"></a> [ec2\_instance](#input\_ec2\_instance) | ECS asg instance type | `string` | n/a | yes |
+| <a name="input_engine"></a> [engine](#input\_engine) | Engine type for the db | `string` | n/a | yes |
 | <a name="input_private_subnet_cidrs"></a> [private\_subnet\_cidrs](#input\_private\_subnet\_cidrs) | CIDR ranges for the private subnets | `list(string)` | n/a | yes |
 | <a name="input_public_subnet_cidrs"></a> [public\_subnet\_cidrs](#input\_public\_subnet\_cidrs) | CIDR ranges for the private subnets | `list(string)` | n/a | yes |
 | <a name="input_rds_aurora_name"></a> [rds\_aurora\_name](#input\_rds\_aurora\_name) | Name of the Aurora PostgreSQL database | `string` | `"tripmgmtdb-cluster"` | no |
@@ -58,6 +58,8 @@ No outputs.
 | [aws_iam_instance_profile.ecs_instance_profile](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_instance_profile) | resource |
 | [aws_iam_role.ecsInstanceRole](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
 | [aws_iam_role.ecsTaskExecutionRole](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role) | resource |
+| [aws_iam_role_policy_attachment.ecs_execution_role_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_iam_role_policy_attachment.ecs_instance_role_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_service_linked_role.AWSServiceRoleForAutoScaling](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_service_linked_role) | resource |
 | [aws_iam_service_linked_role.AWSServiceRoleForECS](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_service_linked_role) | resource |
 | [aws_launch_template.asg_lt](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template) | resource |
