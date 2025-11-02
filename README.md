@@ -6,7 +6,7 @@
 
 This project is inspired by the official "[Building your first DevOps Blue/Green pipeline with Amazon ECS](https://catalog.us-east-1.prod.workshops.aws/workshops/4b59b9fb-48b6-461c-9377-907b2e33c9df/en-US)" workshop. It recreates the solution using **Terraform** for full Infrastructure as Code and **GitHub Actions** for CI/CD automation. The goal is to deliver safe, repeatable, and zero-downtime deployments on AWS.
 
-The workshop guides participants through the process of setting up a robust and automated Blue/Green deployment pipeline for applications hosted on Amazon Elastic Container Service (ECS). By leveraging Blue/Green deployments, we ensure zero downtime, rapid rollbacks, and safer software releases. All the AWS resources required for this workshop are provisioned and managed using Terraform, demonstrating best practices for Infrastructure as Code.
+The workshop guides participants through the process of setting up a robust and automated Blue/Green deployment pipeline for applications hosted on Amazon Elastic Container Service (ECS). By leveraging Blue/Green deployments, we ensure zero downtime, rapid rollbacks, and safer software releases. All the AWS resources required for this workshop are provisioned and managed using Terraform, demonstrating best practices for Infrastructure as Code. 
 
 ## Table of Content
 - [Architectural Diagram](#architectural-diagram)
