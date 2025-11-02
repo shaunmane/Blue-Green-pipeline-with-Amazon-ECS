@@ -42,40 +42,33 @@ variable "rds_aurora_name" {
 variable "engine" {
   description = "Engine type for the db"
   type        = string
-  default     = "aurora-postgresql"
 }
 
 variable "aurora_engine_version" {
   description = "Engine version for aurora db"
   type        = string
-  default     = "14.5"
 }
 
 variable "db_username" {
   description = "Username for my db"
   type        = string
-  default     = "admin"
 }
 variable "db_instance" {
   description = "DB instance type"
   type        = string
-  default     = "db.t4g.medium"
 }
 
 variable "ami_id" {
   description = "DB instance type"
   type        = string
-  default     = "ami-0c02fb55956c7d316"
 }
 
 variable "ec2_instance" {
   description = "ECS asg instance type"
   type        = string
-  default     = "t3.large"
 }
 
 variable "container_name" {
   description = "Container name for the esc service"
   type        = string
-  default     = "cntr-img-tripmgmt"
 }

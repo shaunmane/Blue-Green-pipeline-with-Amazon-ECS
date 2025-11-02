@@ -7,11 +7,6 @@ resource "aws_ecs_cluster" "tripmgmt_cluster" {
   }
 }
 
-resource "aws_iam_instance_profile" "ecs_instance_profile" {
-  name = "ecsInstanceProfile"
-  role = aws_iam_role.ecsInstanceRole.name
-}
-
 # Launch Template (defines what each EC2 instance looks like)
 resource "aws_launch_template" "asg_lt" {
   name_prefix   = "asg-lt-"
