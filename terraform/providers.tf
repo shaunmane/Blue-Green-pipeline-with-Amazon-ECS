@@ -4,11 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 6.13.0"
-    }
-    docker = {
-      source  = "kreuzwerker/docker"
-      version = "~> 3.0"
+      version = "~> 6.0.0"
     }
     random = {
       source = "hashicorp/random"
@@ -26,12 +22,4 @@ terraform {
 
 provider "aws" {
   region = "us-east-1"
-}
-
-provider "docker" {
-  registry_auth {
-    address  = data.aws_ecr_authorization_token.ecr.proxy_endpoint
-    username = data.aws_ecr_authorization_token.ecr.user_name
-    password = data.aws_ecr_authorization_token.ecr.password
-  }
 }
