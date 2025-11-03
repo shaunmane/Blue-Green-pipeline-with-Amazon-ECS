@@ -121,7 +121,7 @@ resource "aws_ecs_task_definition" "tripmgmt" {
   container_definitions = jsonencode([
     {
       name      = "cntr-img-tripmgmt"
-      image     = docker_registry_image.tripmgmt.name
+      image     = "amazoncorretto:11-alpine-jdk"
       essential = true
 
       entryPoint = []

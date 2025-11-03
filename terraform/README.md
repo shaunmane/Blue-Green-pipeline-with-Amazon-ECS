@@ -6,15 +6,13 @@
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | ~> 1.13.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.13.0 |
-| <a name="requirement_docker"></a> [docker](#requirement\_docker) | ~> 3.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.18.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.13.0 |
-| <a name="provider_docker"></a> [docker](#provider\_docker) | ~> 3.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.18.0 |
 | <a name="provider_http"></a> [http](#provider\_http) | n/a |
 | <a name="provider_random"></a> [random](#provider\_random) | n/a |
 
@@ -78,8 +76,6 @@ No outputs.
 | [aws_vpc_security_group_ingress_rule.allow_8080_port_ec2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.allow_80_port](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
 | [aws_vpc_security_group_ingress_rule.allow_80_port_ec2](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_security_group_ingress_rule) | resource |
-| [docker_image.tripmgmt](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/image) | resource |
-| [docker_registry_image.tripmgmt](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs/resources/registry_image) | resource |
 | [random_password.db_password](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_ecr_authorization_token.ecr](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ecr_authorization_token) | data source |
