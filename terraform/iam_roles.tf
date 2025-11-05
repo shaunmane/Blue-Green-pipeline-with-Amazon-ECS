@@ -45,18 +45,14 @@ resource "aws_iam_role" "ecsInstanceRole" {
 # Attaches the AWS-Managed Policy to grant necessary permissions to the EC2 instances.
 resource "aws_iam_role_policy_attachment" "ecs_instance_role_attachment" {
   role       = aws_iam_role.ecsInstanceRole.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSContainerServiceRole"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
+
 
 # This is required for EC2 instances to assume the IAM Role.
 resource "aws_iam_instance_profile" "ecs_instance_profile" {
   name = "ecsInstanceProfile"
   role = aws_iam_role.ecsInstanceRole.name
-}
-
-# Service Linked Role for Amazon ECS
-resource "aws_iam_service_linked_role" "AWSServiceRoleForECS" {
-  aws_service_name = "ecs.amazonaws.com"
 }
 
 # Service Linked Role for Amazon EC2 Auto Scaling

@@ -28,7 +28,7 @@ resource "aws_security_group" "alb_sg" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_80_port" {
   security_group_id = aws_security_group.alb_sg.id
-  cidr_ipv4         = "${chomp(data.http.my_ip.response_body)}/32"
+  cidr_ipv4         = "0.0.0.0/0"
   from_port         = 80
   ip_protocol       = "tcp"
   to_port           = 80
@@ -36,7 +36,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_80_port" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_8080_port" {
   security_group_id = aws_security_group.alb_sg.id
-  cidr_ipv4         = "${chomp(data.http.my_ip.response_body)}/32"
+  cidr_ipv4         = "0.0.0.0/0"
   from_port         = 8080
   ip_protocol       = "tcp"
   to_port           = 8080
@@ -49,8 +49,6 @@ resource "aws_lb" "app_alb" {
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
   subnets            = [var.subnets["us-east-1a"], var.subnets["us-east-1b"]]
-
-  enable_deletion_protection = true
 
   tags = {
     Environment = "dev"
