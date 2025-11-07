@@ -48,7 +48,7 @@ resource "aws_ecs_capacity_provider" "asg_cp" {
 
   auto_scaling_group_provider {
     auto_scaling_group_arn         = aws_autoscaling_group.ecs_asg.arn
-    managed_termination_protection = "ENABLED"
+    managed_termination_protection = "DISABLED"
 
     managed_scaling {
       maximum_scaling_step_size = 2
@@ -122,7 +122,7 @@ resource "aws_ecs_task_definition" "tripmgmt" {
 
   container_definitions = jsonencode([
     {
-      name      = "cntr-img-tripmgmt"
+      name      = var.container_name
       image     = "amazoncorretto:11-alpine-jdk"
       essential = true
 
@@ -184,7 +184,7 @@ resource "aws_ecs_service" "tripmgmt_svc" {
   depends_on      = [aws_iam_role.ecsTaskExecutionRole]
 
   force_new_deployment = true
-  
+
   ordered_placement_strategy {
     type  = "binpack"
     field = "cpu"
@@ -214,5 +214,5 @@ resource "aws_ecs_service" "tripmgmt_svc" {
   }
 
   sigint_rollback       = true
-  wait_for_steady_state = true
+  wait_for_steady_state = false
 }

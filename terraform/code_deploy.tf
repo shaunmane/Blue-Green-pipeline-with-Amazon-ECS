@@ -1,11 +1,19 @@
 resource "aws_codedeploy_app" "frontend" {
-  compute_platform = "ECS"
-  name             = "frontend-deploy"
+  name = "frontend-deploy"
+}
+
+resource "aws_codedeploy_deployment_config" "frontend" {
+  deployment_config_name = "tripmgmt-deployment-config"
+
+  minimum_healthy_hosts {
+    type  = "HOST_COUNT"
+    value = 2
+  }
 }
 
 resource "aws_codedeploy_deployment_group" "frontend" {
   app_name               = aws_codedeploy_app.frontend.name
-  deployment_group_name  = "frontend-deploy-group"
+  deployment_group_name  = "tripmgmnt-deploy-group"
   deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
   service_role_arn       = aws_iam_role.codedeploy.arn
 
@@ -37,95 +45,17 @@ resource "aws_codedeploy_deployment_group" "frontend" {
   load_balancer_info {
     target_group_pair_info {
       prod_traffic_route {
-        listener_arns = [aws_alb_listener.l_443.arn]
+        listener_arns = [aws_lb_listener.port_80_listener.arn]
       }
 
       target_group {
-        name = aws_lb_target_group.tg[0].name
+        name = aws_lb_target_group.alb_target_80.name
       }
 
       target_group {
-        name = aws_lb_target_group.tg[1].name
+        name = aws_lb_target_group.alb_target_8080.name
       }
 
-      
     }
   }
-
-}
-
-data "aws_iam_policy_document" "assume_by_codedeploy" {
-  statement {
-    sid     = ""
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["codedeploy.amazonaws.com"]
-    }
-  }
-}
-
-resource "aws_iam_role" "codedeploy" {
-  name               = "codedeploy"
-  assume_role_policy = data.aws_iam_policy_document.assume_by_codedeploy.json
-}
-
-
-data "aws_iam_policy_document" "codedeploy" {
-  statement {
-    sid    = "AllowLoadBalancingAndECSModifications"
-    effect = "Allow"
-
-    actions = [
-      "ecs:CreateTaskSet",
-      "ecs:DeleteTaskSet",
-      "ecs:DescribeServices",
-      "ecs:UpdateServicePrimaryTaskSet",
-      "elasticloadbalancing:DescribeListeners",
-      "elasticloadbalancing:DescribeRules",
-      "elasticloadbalancing:DescribeTargetGroups",
-      "elasticloadbalancing:ModifyListener",
-      "elasticloadbalancing:ModifyRule",
-      "s3:GetObject"
-    ]
-
-    resources = ["*"]
-  }
-  statement {
-    sid    = "AllowPassRole"
-    effect = "Allow"
-
-    actions = ["iam:PassRole"]
-
-    resources = [
-      aws_iam_role.app_task_role.arn
-    ]
-  }
-
-  statement {
-    sid    = "DeployService"
-    effect = "Allow"
-
-    actions = ["ecs:DescribeServices",
-      "codedeploy:GetDeploymentGroup",
-      "codedeploy:CreateDeployment",
-      "codedeploy:GetDeployment",
-      "codedeploy:GetDeploymentConfig",
-    "codedeploy:RegisterApplicationRevision"]
-
-    resources = [
-      aws_ecs_service.frontend.id,
-      aws_codedeploy_deployment_group.frontend.arn,
-      "arn:aws:codedeploy:${var.region}:${var.aws_account_id}:deploymentconfig:*}",
-      aws_codedeploy_app.frontend.arn
-    ]
-  }
-
-
-}
-resource "aws_iam_role_policy" "codedeploy" {
-  role   = aws_iam_role.codedeploy.name
-  policy = data.aws_iam_policy_document.codedeploy.json
 }
