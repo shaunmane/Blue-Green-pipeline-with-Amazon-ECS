@@ -2,7 +2,7 @@
 resource "aws_iam_role" "ecsTaskExecutionRole" {
   name = "ecsTaskExecutionRole"
 
-  # This is the standard Trust Relationship for ECS Tasks
+  # Standard Trust Relationship for ECS Tasks
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -17,7 +17,6 @@ resource "aws_iam_role" "ecsTaskExecutionRole" {
   })
 }
 
-# This uses the ARN for the official policy, which should be SCP-compliant.
 resource "aws_iam_role_policy_attachment" "ecs_execution_role_attachment" {
   role       = aws_iam_role.ecsTaskExecutionRole.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
@@ -42,14 +41,14 @@ resource "aws_iam_role" "ecsInstanceRole" {
   })
 }
 
-# Attaches the AWS-Managed Policy to grant necessary permissions to the EC2 instances.
+# AWS-Managed Policy to grant necessary permissions to the EC2 instances.
 resource "aws_iam_role_policy_attachment" "ecs_instance_role_attachment" {
   role       = aws_iam_role.ecsInstanceRole.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
 
 
-# This is required for EC2 instances to assume the IAM Role.
+# EC2 instances to assume the IAM Role.
 resource "aws_iam_instance_profile" "ecs_instance_profile" {
   name = "ecsInstanceProfile"
   role = aws_iam_role.ecsInstanceRole.name
@@ -132,4 +131,30 @@ data "aws_iam_policy_document" "codedeploy" {
 resource "aws_iam_role_policy" "codedeploy" {
   role   = aws_iam_role.codedeploy.name
   policy = data.aws_iam_policy_document.codedeploy.json
+}
+
+resource "aws_iam_role" "codebuild_role" {
+  name = "codebuild-tripmgmt-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "codebuild.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+# Attach basic permissions
+resource "aws_iam_role_policy_attachment" "codebuild_ecr_access" {
+  role       = aws_iam_role.codebuild_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+}
+
+resource "aws_iam_role_policy_attachment" "codebuild_logs_access" {
+  role       = aws_iam_role.codebuild_role.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
 }

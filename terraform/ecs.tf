@@ -71,20 +71,6 @@ resource "aws_ecs_cluster_capacity_providers" "ecs_cp_attach" {
   }
 }
 
-/*
-resource "aws_ecs_cluster_capacity_providers" "fargate_cp" {
-  cluster_name = aws_ecs_cluster.tripmgmt_cluster.name 
-
-  capacity_providers = ["FARGATE"]
-
-  default_capacity_provider_strategy {
-    base              = 1
-    weight            = 100
-    capacity_provider = "FARGATE"
-  }
-}
-*/
-
 # Security Group for EC2 Container Instance
 resource "aws_security_group" "ecs_container_sg" {
   name        = "ECS-ALB-SecurityGroup"
@@ -123,7 +109,7 @@ resource "aws_ecs_task_definition" "tripmgmt" {
   container_definitions = jsonencode([
     {
       name      = var.container_name
-      image     = "amazoncorretto:11-alpine-jdk"
+      image     = "${aws_ecr_repository.tripmgmt.repository_url}:latest"
       essential = true
 
       entryPoint = []
