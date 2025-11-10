@@ -14,7 +14,7 @@ resource "aws_codedeploy_deployment_config" "frontend" {
 resource "aws_codedeploy_deployment_group" "frontend" {
   app_name               = aws_codedeploy_app.frontend.name
   deployment_group_name  = "tripmgmnt-deploy-group"
-  deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
+  deployment_config_name = aws_codedeploy_deployment_config.frontend.name
   service_role_arn       = aws_iam_role.codedeploy.arn
 
   blue_green_deployment_config {
