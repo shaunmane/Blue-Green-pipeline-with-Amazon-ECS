@@ -9,16 +9,14 @@ This project is inspired by the official "[Building your first DevOps Blue/Green
 The workshop guides participants through the process of setting up a robust and automated Blue/Green deployment pipeline for applications hosted on Amazon Elastic Container Service (ECS). By leveraging Blue/Green deployments, we ensure zero downtime, rapid rollbacks, and safer software releases. All the AWS resources required for this workshop are provisioned and managed using Terraform, demonstrating best practices for Infrastructure as Code. 
 
 ## Table of Content
-<!-- - [Architectural Diagram](#architectural-diagram) -->
+- [Architectural Diagram](#architectural-diagram) 
 - [Prerequisites](#prerequisites)
 - [Technologies Used](#technologies-used)
   * [Services Used](#services-used)
 
-<!--
 ## Architectural Diagram
 
 ![diagram](architecture-ecs-ec2.png) 
--->
 
 ## Prerequisites
 - **OIDC(OpenID Connect) IAM Role**: Allows an external identity provider (like GitHub or an EKS cluster) to assume an IAM role in your AWS account without needing long-lived access keys. 

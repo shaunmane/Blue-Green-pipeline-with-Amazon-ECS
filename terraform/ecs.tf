@@ -34,6 +34,8 @@ resource "aws_autoscaling_group" "ecs_asg" {
     version = "$Latest"
   }
 
+  protect_from_scale_in = true
+
   tag {
     key                 = "Name"
     value               = "ecs-asg-instance"
@@ -46,7 +48,7 @@ resource "aws_ecs_capacity_provider" "asg_cp" {
 
   auto_scaling_group_provider {
     auto_scaling_group_arn         = aws_autoscaling_group.ecs_asg.arn
-    managed_termination_protection = "ENABLED"
+    managed_termination_protection = "DISABLED"
 
     managed_scaling {
       maximum_scaling_step_size = 2
@@ -96,7 +98,7 @@ resource "aws_security_group" "ecs_container_sg" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_80_port_ec2" {
   security_group_id = aws_security_group.ecs_container_sg.id
-  cidr_ipv4         = "${chomp(data.http.my_ip.response_body)}/32"
+  cidr_ipv4         = "0.0.0.0/0"
   from_port         = 80
   ip_protocol       = "tcp"
   to_port           = 80
@@ -104,7 +106,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_80_port_ec2" {
 
 resource "aws_vpc_security_group_ingress_rule" "allow_8080_port_ec2" {
   security_group_id = aws_security_group.ecs_container_sg.id
-  cidr_ipv4         = "${chomp(data.http.my_ip.response_body)}/32"
+  cidr_ipv4         = "0.0.0.0/0"
   from_port         = 8080
   ip_protocol       = "tcp"
   to_port           = 8080
@@ -120,7 +122,7 @@ resource "aws_ecs_task_definition" "tripmgmt" {
 
   container_definitions = jsonencode([
     {
-      name      = "cntr-img-tripmgmt"
+      name      = var.container_name
       image     = "amazoncorretto:11-alpine-jdk"
       essential = true
 
@@ -181,6 +183,8 @@ resource "aws_ecs_service" "tripmgmt_svc" {
   desired_count   = 2
   depends_on      = [aws_iam_role.ecsTaskExecutionRole]
 
+  force_new_deployment = true
+
   ordered_placement_strategy {
     type  = "binpack"
     field = "cpu"
@@ -201,18 +205,14 @@ resource "aws_ecs_service" "tripmgmt_svc" {
     security_groups = [aws_security_group.ecs_container_sg.id]
   }
 
-  deployment_configuration {
-    strategy = "BLUE_GREEN"
+  deployment_controller {
+    type = "CODE_DEPLOY"
   }
 
-  /*
-  advanced_configuration {
-    alternate_target_group_arn = aws_lb_target_group.alb_target_8080.arn
-    production_listener_rule   = aws_lb_listener.port_80_listener.arn
-    role_arn                   = aws_iam_role.ecsInstanceRole.arn
+  lifecycle {
+    ignore_changes = [task_definition, desired_count, load_balancer]
   }
-  */
 
   sigint_rollback       = true
-  wait_for_steady_state = true
+  wait_for_steady_state = false
 }
