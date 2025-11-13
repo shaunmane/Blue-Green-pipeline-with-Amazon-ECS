@@ -158,3 +158,67 @@ resource "aws_iam_role_policy_attachment" "codebuild_logs_access" {
   role       = aws_iam_role.codebuild_role.name
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
 }
+
+resource "aws_iam_role" "codepipeline_role" {
+  name = "codepipeline-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Effect = "Allow",
+      Principal = {
+        Service = "codepipeline.amazonaws.com"
+      },
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "codepipeline_policy" {
+  name = "codepipeline_policy"
+  role = aws_iam_role.codepipeline_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      # S3 permissions
+      {
+        Effect = "Allow"
+        Action = ["s3:GetObject", "s3:GetObjectVersion", "s3:ListBucket", "s3:GetObject", "s3:GetBucketVersioning", "s3:PutObjectAcl", "s3:PutObject"]
+        Resource = [
+          aws_s3_bucket.source.arn,
+          "${aws_s3_bucket.source.arn}/*"
+        ]
+      },
+      # CodeBuild permissions
+      {
+        Effect   = "Allow"
+        Action   = ["codebuild:StartBuild", "codebuild:BatchGetBuilds", "codebuild:BatchGetProjects"]
+        Resource = "*"
+      },
+      # CodeDeploy permissions
+      {
+        Effect = "Allow"
+        Action = [
+          "codedeploy:CreateDeployment",
+          "codedeploy:GetApplication",
+          "codedeploy:GetDeploymentGroup",
+          "codedeploy:RegisterApplicationRevision",
+          "codedeploy:GetDeployment",
+          "codedeploy:ListApplications",
+          "codedeploy:ListDeploymentGroups"
+        ]
+        Resource = "*"
+      },
+      # IAM PassRole for CodeBuild & CodeDeploy
+      {
+        Effect = "Allow"
+        Action = ["iam:PassRole"]
+        Resource = [
+          aws_iam_role.codebuild_role.arn,
+          aws_iam_role.codedeploy.arn
+        ]
+      }
+    ]
+  })
+}

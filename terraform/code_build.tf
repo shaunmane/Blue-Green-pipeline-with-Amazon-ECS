@@ -13,6 +13,7 @@ resource "aws_codebuild_project" "tripmgmt_build" {
     image           = "aws/codebuild/amazonlinux-x86_64-standard:corretto11"
     type            = "LINUX_CONTAINER"
     privileged_mode = true
+
     environment_variable {
       name  = "AWS_DEFAULT_REGION"
       value = var.aws_region
