@@ -27,7 +27,9 @@ resource "aws_codebuild_project" "tripmgmt_build" {
     environment_variable {
       name  = "YOUR_REPOSITORY_URI"
       value = aws_ecr_repository.tripmgmt.repository_url
-    } environment_variable {
+    } 
+    
+    environment_variable {
       name  = "S3_BUCKET"
       value = aws_s3_bucket.source.bucket
     }
@@ -48,6 +50,11 @@ phases:
       - echo Logging in to Amazon ECR...
       - aws --version
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - echo Downloading tripmgmt app ZIP...
+      - wget "https://static.us-east-1.prod.workshops.aws/public/3f41e691-93ab-44aa-b826-51bd51b55e54/static/reference-files/tripmgmt-7_9_3.zip" -O tripmgmt.zip
+      - echo Extracting ZIP...
+      - mkdir tripmgmt
+      - unzip tripmgmt.zip -d tripmgmt
       - REPOSITORY_URI=$YOUR_REPOSITORY_URI
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
