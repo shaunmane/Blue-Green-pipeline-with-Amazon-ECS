@@ -1,7 +1,7 @@
 resource "aws_codebuild_project" "tripmgmt_build" {
   name          = "tripmgmt-build"
   description   = "Builds and pushes Docker image for tripmgmt to ECR"
-  service_role  = aws_iam_role.codebuild_role.arn
+  service_role  = aws_iam_role.codebuild.arn
   build_timeout = 30
 
   artifacts {
@@ -27,12 +27,15 @@ resource "aws_codebuild_project" "tripmgmt_build" {
     environment_variable {
       name  = "YOUR_REPOSITORY_URI"
       value = aws_ecr_repository.tripmgmt.repository_url
+    } environment_variable {
+      name  = "S3_BUCKET"
+      value = aws_s3_bucket.source.bucket
     }
   }
 
   source {
-    type      = "GITHUB"
-    location  = "https://github.com/shaunmane/Blue-Green-pipeline-with-Amazon-ECS.git"
+    type      = "S3"
+    location  = "${aws_s3_bucket.source.bucket}/tripmgmt/"
     buildspec = <<EOF
 version: 0.2
 

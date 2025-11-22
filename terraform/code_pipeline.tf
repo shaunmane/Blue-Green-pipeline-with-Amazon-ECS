@@ -26,7 +26,7 @@ resource "aws_s3_bucket_policy" "source_policy" {
         Sid    = "AllowCodePipelineAccess"
         Effect = "Allow"
         Principal = {
-          AWS = aws_iam_role.codepipeline_role.arn
+          AWS = aws_iam_role.codepipeline.arn
         }
         Action = ["s3:GetObject", "s3:GetObjectVersion", "s3:ListBucket"]
         Resource = [
@@ -42,7 +42,7 @@ resource "aws_codepipeline" "codepipeline" {
   depends_on = [aws_s3_object.dockerfile]
 
   name     = "tripmgmt-pipeline"
-  role_arn = aws_iam_role.codepipeline_role.arn
+  role_arn = aws_iam_role.codepipeline.arn
 
   artifact_store {
     location = aws_s3_bucket.source.bucket
