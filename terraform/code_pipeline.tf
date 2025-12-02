@@ -1,13 +1,27 @@
 # S3 bucket to store source artifacts
 resource "aws_s3_bucket" "source" {
-  bucket = "tripmgmt-source-bucket"
+  bucket = "codepipeline-tripmgmt-bucket"
 }
 
+data "archive_file" "tripmgmt_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/../tripmgmt"
+  output_path = "${path.module}/tripmgmt.zip"
+}
+
+resource "aws_s3_object" "tripmgmt_zip" {
+  bucket = aws_s3_bucket.source.bucket
+  key    = "tripmgmt.zip"
+  source = data.archive_file.tripmgmt_zip.output_path
+  etag   = filemd5(data.archive_file.tripmgmt_zip.output_path)
+}
+
+/*
 resource "aws_s3_object" "dockerfile" {
   bucket = aws_s3_bucket.source.bucket
-  key    = "Dockerfile"
-  source = "${path.module}/../tripmgmt/Dockerfile"
-}
+  key    = "tripmgmt.zip" 
+  source = "${path.module}/../tripmgmt"
+} */
 
 resource "aws_s3_bucket_versioning" "versioning_source" {
   bucket = aws_s3_bucket.source.id
@@ -23,23 +37,45 @@ resource "aws_s3_bucket_policy" "source_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "AllowCodePipelineAccess"
-        Effect = "Allow"
+        Sid       = "AllowCodePipelineListBucket"
+        Effect    = "Allow"
         Principal = {
           AWS = aws_iam_role.codepipeline.arn
         }
-        Action = ["s3:GetObject", "s3:GetObjectVersion", "s3:ListBucket"]
-        Resource = [
-          aws_s3_bucket.source.arn,
-          "${aws_s3_bucket.source.arn}/*"
+        Action   = "s3:ListBucket"
+        Resource = aws_s3_bucket.source.arn
+      },
+      {
+        Sid       = "AllowCodePipelineGetPutObjects"
+        Effect    = "Allow"
+        Principal = {
+          AWS = aws_iam_role.codepipeline.arn
+        }
+        Action   = ["s3:GetObject", "s3:GetObjectVersion", "s3:PutObject"]
+        Resource = "${aws_s3_bucket.source.arn}/*"
+      },
+      {
+        Sid       = "AllowCodePipelineUseOfKey"
+        Effect    = "Allow"
+        Principal = {
+          AWS = aws_iam_role.codepipeline.arn
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
         ]
+        Resource = "*"
       }
     ]
   })
 }
 
+
 resource "aws_codepipeline" "codepipeline" {
-  depends_on = [aws_s3_object.dockerfile]
+  depends_on = [aws_s3_object.tripmgmt_zip]
 
   name     = "tripmgmt-pipeline"
   role_arn = aws_iam_role.codepipeline.arn
@@ -62,7 +98,7 @@ resource "aws_codepipeline" "codepipeline" {
 
       configuration = {
         S3Bucket    = aws_s3_bucket.source.bucket
-        S3ObjectKey = "Dockerfile"
+        S3ObjectKey = "tripmgmt.zip"
       }
     }
   }
@@ -89,7 +125,7 @@ resource "aws_codepipeline" "codepipeline" {
     name = "Deploy"
 
     action {
-      name            = "CodeDeployDeploy"
+      name            = "CodeDeploy"
       category        = "Deploy"
       owner           = "AWS"
       provider        = "CodeDeploy"

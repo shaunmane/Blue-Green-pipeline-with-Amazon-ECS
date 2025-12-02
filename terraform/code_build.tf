@@ -5,7 +5,7 @@ resource "aws_codebuild_project" "tripmgmt_build" {
   build_timeout = 30
 
   artifacts {
-    type = "NO_ARTIFACTS"
+    type = "CODEPIPELINE"
   }
 
   environment {
@@ -27,17 +27,12 @@ resource "aws_codebuild_project" "tripmgmt_build" {
     environment_variable {
       name  = "YOUR_REPOSITORY_URI"
       value = aws_ecr_repository.tripmgmt.repository_url
-    } 
-    
-    environment_variable {
-      name  = "S3_BUCKET"
-      value = aws_s3_bucket.source.bucket
     }
   }
 
   source {
-    type      = "S3"
-    location  = "${aws_s3_bucket.source.bucket}/tripmgmt/"
+    type = "CODEPIPELINE"
+    #location  = "${aws_s3_bucket.source.bucket}/tripmgmt/"
     buildspec = <<EOF
 version: 0.2
 

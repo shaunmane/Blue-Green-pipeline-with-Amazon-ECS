@@ -58,9 +58,7 @@ resource "aws_iam_service_linked_role" "AWSServiceRoleForAutoScaling" {
   aws_service_name = "autoscaling.amazonaws.com"
 }
 
------------------------------------------
 ######## ---- Codepipeline ---- #########
------------------------------------------
 resource "aws_iam_role" "codepipeline" {
   name = "codepipeline_role"
 
@@ -84,9 +82,37 @@ resource "aws_iam_role_policy_attachment" "pipeline_execution_role_attachment" {
   policy_arn = "arn:aws:iam::aws:policy/AWSCodePipeline_FullAccess"
 }
 
-----------------------------------------
+resource "aws_iam_role_policy_attachment" "build_execution_role_attachment_pipeline" {
+  role       = aws_iam_role.codepipeline.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSCodeBuildDeveloperAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "build_execution_role_attachment_deploy" {
+  role       = aws_iam_role.codepipeline.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"
+}
+
+# policy for codepipeline accessing s3
+resource "aws_iam_role_policy" "codepipeline_s3_access" {
+  name = "CodePipelineS3SourceAccess"
+  role = aws_iam_role.codepipeline.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:*",
+          "s3-object-lambda:*"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 ######## ----- CodeBuild ----- #########
-----------------------------------------
 resource "aws_iam_role" "codebuild" {
   name = "codebuild_role"
 
@@ -110,9 +136,42 @@ resource "aws_iam_role_policy_attachment" "build_execution_role_attachment" {
   policy_arn = "arn:aws:iam::aws:policy/AWSCodeBuildDeveloperAccess"
 }
 
------------------------------------------
+resource "aws_iam_role_policy" "codebuild_logs_access" {
+  name = "CodeBuildLogsAccess"
+  role = aws_iam_role.codebuild.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "tag:TagResource",
+          "tag:UntagResource",
+          "tag:GetResources",
+          "tag:GetTagKeys",
+          "tag:GetTagValues",
+
+          # Service-specific tagging
+          "s3:PutBucketTagging",
+          "s3:DeleteBucketagging",
+          "codebuild:TagResource",
+          "codepipeline:TagResource",
+          "codedeploy:TagResource",
+          "codedeploy:UntagResource",
+          "s3:*",
+          "ecr:*"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 ######## ----- CodeDeploy ----- #########
------------------------------------------
 resource "aws_iam_role" "codedeploy" {
   name = "codedeploy_role"
 
@@ -134,4 +193,25 @@ resource "aws_iam_role" "codedeploy" {
 resource "aws_iam_role_policy_attachment" "deploy_execution_role_attachment" {
   role       = aws_iam_role.codedeploy.name
   policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"
+}
+
+resource "aws_iam_role_policy" "codedeploy_access" {
+  name = "CodeDeployAccess"
+  role = aws_iam_role.codedeploy.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:*",
+          "tag:*",
+          "s3:*",
+          "ecr:*"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }
