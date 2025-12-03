@@ -163,7 +163,9 @@ resource "aws_iam_role_policy" "codebuild_logs_access" {
           "codedeploy:TagResource",
           "codedeploy:UntagResource",
           "s3:*",
-          "ecr:*"
+          "s3-object-lambda:*",
+          "ecr:*",
+          "ecs:*"
         ]
         Resource = "*"
       }
@@ -208,7 +210,9 @@ resource "aws_iam_role_policy" "codedeploy_access" {
           "logs:*",
           "tag:*",
           "s3:*",
-          "ecr:*"
+          "s3-object-lambda:*",
+          "ecr:*",
+          "ecs:*"
         ]
         Resource = "*"
       }
