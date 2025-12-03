@@ -1,20 +1,12 @@
 resource "aws_codedeploy_app" "frontend" {
-  name = "frontend-deploy"
-}
-
-resource "aws_codedeploy_deployment_config" "frontend" {
-  deployment_config_name = "tripmgmt-deployment-config"
-
-  minimum_healthy_hosts {
-    type  = "HOST_COUNT"
-    value = 2
-  }
+  name             = "frontend-deploy"
+  compute_platform = "ECS"
 }
 
 resource "aws_codedeploy_deployment_group" "frontend" {
   app_name               = aws_codedeploy_app.frontend.name
-  deployment_group_name  = "tripmgmnt-deploy-group"
-  deployment_config_name = "tripmgmt-deployment-config"
+  deployment_group_name  = "tripmgmt-deploy-group"
+  deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
   service_role_arn       = aws_iam_role.codedeploy.arn
 
   blue_green_deployment_config {

@@ -219,3 +219,32 @@ resource "aws_iam_role_policy" "codedeploy_access" {
     ]
   })
 }
+
+resource "aws_s3_bucket_policy" "artifact_policy" {
+  bucket = aws_s3_bucket.source.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid : "AllowCodePipelineAndCodeDeployReadArtifacts",
+        Effect : "Allow",
+        Principal : {
+          AWS : [
+            aws_iam_role.codepipeline.arn,
+            aws_iam_role.codedeploy.arn
+          ]
+        },
+        Action : [
+          "s3:GetObject",
+          "s3:GetObjectVersion",
+          "s3:GetBucketLocation"
+        ],
+        Resource : [
+          "${aws_s3_bucket.source.arn}",
+          "${aws_s3_bucket.source.arn}/*"
+        ]
+      }
+    ]
+  })
+}

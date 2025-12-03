@@ -1,6 +1,8 @@
 # S3 bucket to store source artifacts
 resource "aws_s3_bucket" "source" {
   bucket = "codepipeline-tripmgmt-bucket"
+
+  force_destroy = true
 }
 
 data "archive_file" "tripmgmt_zip" {
@@ -16,13 +18,6 @@ resource "aws_s3_object" "tripmgmt_zip" {
   etag   = filemd5(data.archive_file.tripmgmt_zip.output_path)
 }
 
-/*
-resource "aws_s3_object" "dockerfile" {
-  bucket = aws_s3_bucket.source.bucket
-  key    = "tripmgmt.zip" 
-  source = "${path.module}/../tripmgmt"
-} */
-
 resource "aws_s3_bucket_versioning" "versioning_source" {
   bucket = aws_s3_bucket.source.id
   versioning_configuration {
@@ -34,45 +29,30 @@ resource "aws_s3_bucket_policy" "source_policy" {
   bucket = aws_s3_bucket.source.id
 
   policy = jsonencode({
-    Version = "2012-10-17"
+    Version = "2012-10-17",
     Statement = [
       {
-        Sid       = "AllowCodePipelineListBucket"
-        Effect    = "Allow"
+        Sid    = "CodePipelineS3Access",
+        Effect = "Allow",
         Principal = {
           AWS = aws_iam_role.codepipeline.arn
-        }
-        Action   = "s3:ListBucket"
-        Resource = aws_s3_bucket.source.arn
-      },
-      {
-        Sid       = "AllowCodePipelineGetPutObjects"
-        Effect    = "Allow"
-        Principal = {
-          AWS = aws_iam_role.codepipeline.arn
-        }
-        Action   = ["s3:GetObject", "s3:GetObjectVersion", "s3:PutObject"]
-        Resource = "${aws_s3_bucket.source.arn}/*"
-      },
-      {
-        Sid       = "AllowCodePipelineUseOfKey"
-        Effect    = "Allow"
-        Principal = {
-          AWS = aws_iam_role.codepipeline.arn
-        }
+        },
         Action = [
-          "kms:Encrypt",
-          "kms:Decrypt",
-          "kms:ReEncrypt*",
-          "kms:GenerateDataKey*",
-          "kms:DescribeKey"
+          "s3:GetObject",
+          "s3:GetObjectVersion",
+          "s3:PutObject",
+          "s3:PutObjectAcl",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          aws_s3_bucket.source.arn,
+          "${aws_s3_bucket.source.arn}/*"
         ]
-        Resource = "*"
       }
     ]
   })
 }
-
 
 resource "aws_codepipeline" "codepipeline" {
   depends_on = [aws_s3_object.tripmgmt_zip]

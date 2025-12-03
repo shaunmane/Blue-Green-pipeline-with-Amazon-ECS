@@ -31,8 +31,7 @@ resource "aws_codebuild_project" "tripmgmt_build" {
   }
 
   source {
-    type = "CODEPIPELINE"
-    #location  = "${aws_s3_bucket.source.bucket}/tripmgmt/"
+    type      = "CODEPIPELINE"
     buildspec = <<EOF
 version: 0.2
 
@@ -53,21 +52,29 @@ phases:
       - REPOSITORY_URI=$YOUR_REPOSITORY_URI
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=build-$(echo $CODEBUILD_BUILD_ID | awk -F":" '{print $2}')
+
   build:
     commands:
       - echo Build started on `date`
-      - echo Building the Docker image...
       - chmod 775 ./gradlew
       - ./gradlew clean
       - ./gradlew bootWar -Pprod -Pwar
+      - echo Building Docker image...
       - docker build -t $REPOSITORY_URI:latest .
       - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+
   post_build:
     commands:
       - echo Build completed on `date`
-      - echo Pushing the Docker images...
+      - echo Pushing Docker images...
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - echo Creating imagedefinitions.json...
+      - printf '[{"name":"tripmgmt","imageUri":"%s"}]' "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
 EOF
   }
 
