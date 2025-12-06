@@ -72,3 +72,48 @@ variable "container_name" {
   description = "Container name for the esc service"
   type        = string
 }
+
+variable "pipeline_bucket" {
+  description = "S3 bucket for AWS Code Pipeline Artifacts"
+  type        = string
+}
+
+variable "codebuild_project" {
+  description = "Name of the CodeBuild project"
+  type        = string
+}
+
+variable "codedeploy_app" {
+  description = "Name of the CodeDeployment App"
+  type        = string
+}
+
+variable "deployment_group" {
+  description = "Name of the deployment group"
+  type        = string
+}
+
+variable "ecs_cluster" {
+  description = "Name of the ECS Cluster"
+  type        = string
+}
+
+variable "ecs_capacity_provider" {
+  description = "Name of the ECS capacity provider"
+  type        = string
+}
+
+variable "ecs_alb_sg" {
+  description = "Name of ECS security group"
+  type        = string
+}
+
+variable "ecs_asg" {
+  description = "Name of the ECS Auto Scaling Group"
+  type        = string
+}
+
+variable "ecs_svc" {
+  description = "Name of the ECS service"
+  type        = string
+}

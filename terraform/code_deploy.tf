@@ -1,20 +1,12 @@
 resource "aws_codedeploy_app" "frontend" {
-  name = "frontend-deploy"
-}
-
-resource "aws_codedeploy_deployment_config" "frontend" {
-  deployment_config_name = "tripmgmt-deployment-config"
-
-  minimum_healthy_hosts {
-    type  = "HOST_COUNT"
-    value = 2
-  }
+  name             = var.codedeploy_app
+  compute_platform = "ECS"
 }
 
 resource "aws_codedeploy_deployment_group" "frontend" {
   app_name               = aws_codedeploy_app.frontend.name
-  deployment_group_name  = "tripmgmnt-deploy-group"
-  deployment_config_name = aws_codedeploy_deployment_config.frontend.name
+  deployment_group_name  = var.deployment_group
+  deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
   service_role_arn       = aws_iam_role.codedeploy.arn
 
   blue_green_deployment_config {
@@ -37,6 +29,7 @@ resource "aws_codedeploy_deployment_group" "frontend" {
     deployment_option = "WITH_TRAFFIC_CONTROL"
     deployment_type   = "BLUE_GREEN"
   }
+
   auto_rollback_configuration {
     enabled = true
     events  = ["DEPLOYMENT_FAILURE"]
@@ -44,10 +37,6 @@ resource "aws_codedeploy_deployment_group" "frontend" {
 
   load_balancer_info {
     target_group_pair_info {
-      prod_traffic_route {
-        listener_arns = [aws_lb_listener.port_80_listener.arn]
-      }
-
       target_group {
         name = aws_lb_target_group.alb_target_80.name
       }
@@ -56,6 +45,13 @@ resource "aws_codedeploy_deployment_group" "frontend" {
         name = aws_lb_target_group.alb_target_8080.name
       }
 
+      prod_traffic_route {
+        listener_arns = [aws_lb_listener.port_80_listener.arn]
+      }
+
+      test_traffic_route {
+        listener_arns = [aws_lb_listener.port_8080_listener.arn]
+      }
     }
   }
 }

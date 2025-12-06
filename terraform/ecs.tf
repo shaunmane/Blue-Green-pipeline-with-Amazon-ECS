@@ -1,5 +1,5 @@
 resource "aws_ecs_cluster" "tripmgmt_cluster" {
-  name = "ecs-cluster-tripmgmtdemo"
+  name = var.ecs_cluster
 
   setting {
     name  = "containerInsights"
@@ -23,7 +23,7 @@ resource "aws_launch_template" "asg_lt" {
 }
 
 resource "aws_autoscaling_group" "ecs_asg" {
-  name                = "ecs-tripmgmt-asg"
+  name                = var.ecs_asg
   desired_capacity    = 2
   max_size            = 4
   min_size            = 2
@@ -44,7 +44,7 @@ resource "aws_autoscaling_group" "ecs_asg" {
 }
 
 resource "aws_ecs_capacity_provider" "asg_cp" {
-  name = "ec2-capacity-provider"
+  name = var.ecs_capacity_provider
 
   auto_scaling_group_provider {
     auto_scaling_group_arn         = aws_autoscaling_group.ecs_asg.arn
@@ -71,23 +71,9 @@ resource "aws_ecs_cluster_capacity_providers" "ecs_cp_attach" {
   }
 }
 
-/*
-resource "aws_ecs_cluster_capacity_providers" "fargate_cp" {
-  cluster_name = aws_ecs_cluster.tripmgmt_cluster.name 
-
-  capacity_providers = ["FARGATE"]
-
-  default_capacity_provider_strategy {
-    base              = 1
-    weight            = 100
-    capacity_provider = "FARGATE"
-  }
-}
-*/
-
 # Security Group for EC2 Container Instance
 resource "aws_security_group" "ecs_container_sg" {
-  name        = "ECS-ALB-SecurityGroup"
+  name        = var.ecs_alb_sg
   description = "Allow access to Trip Management Monolith Application."
   vpc_id      = var.vpc_id
 
@@ -123,7 +109,7 @@ resource "aws_ecs_task_definition" "tripmgmt" {
   container_definitions = jsonencode([
     {
       name      = var.container_name
-      image     = "amazoncorretto:11-alpine-jdk"
+      image     = "${aws_ecr_repository.tripmgmt.repository_url}:latest"
       essential = true
 
       entryPoint = []
@@ -177,7 +163,7 @@ resource "aws_ecs_task_definition" "tripmgmt" {
 }
 
 resource "aws_ecs_service" "tripmgmt_svc" {
-  name            = "tripmgmt-svc"
+  name            = var.ecs_svc
   cluster         = aws_ecs_cluster.tripmgmt_cluster.id
   task_definition = aws_ecs_task_definition.tripmgmt.arn
   desired_count   = 2

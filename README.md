@@ -36,6 +36,9 @@ The workshop guides participants through the process of setting up a robust and 
 ### Services Used
 
 - **AWS IAM**: For permissions to allow your role and other AWS services to execute the infrastructure code.
+- **AWS CodePipeline**: Automates the build, test, and deploy phases of your release process every time there is a code change.
+- **AWS CodeBuild**: Compile source code and build & store container image in an Elastic Container Registry.
+- **AWS CodeDeploy**: Initiate Blue/Green deployment of ECS Task(s) in an ECS Cluster through ECS Service.
 - **Amazon ECS**: Service & Task Definitions.
 - **Amazon EC2**: Compute engine for `Amazon ECS` with autoscaling and ALB.
 - **Amazon Aurora**: Database for the application.

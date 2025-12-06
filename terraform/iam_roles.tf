@@ -2,7 +2,7 @@
 resource "aws_iam_role" "ecsTaskExecutionRole" {
   name = "ecsTaskExecutionRole"
 
-  # This is the standard Trust Relationship for ECS Tasks
+  # Standard Trust Relationship for ECS Tasks
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -17,7 +17,6 @@ resource "aws_iam_role" "ecsTaskExecutionRole" {
   })
 }
 
-# This uses the ARN for the official policy, which should be SCP-compliant.
 resource "aws_iam_role_policy_attachment" "ecs_execution_role_attachment" {
   role       = aws_iam_role.ecsTaskExecutionRole.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
@@ -42,14 +41,13 @@ resource "aws_iam_role" "ecsInstanceRole" {
   })
 }
 
-# Attaches the AWS-Managed Policy to grant necessary permissions to the EC2 instances.
+# AWS-Managed Policy to grant necessary permissions to the EC2 instances.
 resource "aws_iam_role_policy_attachment" "ecs_instance_role_attachment" {
   role       = aws_iam_role.ecsInstanceRole.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
 }
 
-
-# This is required for EC2 instances to assume the IAM Role.
+# EC2 instances to assume the IAM Role.
 resource "aws_iam_instance_profile" "ecs_instance_profile" {
   name = "ecsInstanceProfile"
   role = aws_iam_role.ecsInstanceRole.name
@@ -60,76 +58,234 @@ resource "aws_iam_service_linked_role" "AWSServiceRoleForAutoScaling" {
   aws_service_name = "autoscaling.amazonaws.com"
 }
 
-data "aws_iam_policy_document" "assume_by_codedeploy" {
-  statement {
-    sid     = ""
-    effect  = "Allow"
-    actions = ["sts:AssumeRole"]
+######## ---- Codepipeline ---- #########
+resource "aws_iam_role" "codepipeline" {
+  name = "codepipeline_role"
 
-    principals {
-      type        = "Service"
-      identifiers = ["codedeploy.amazonaws.com"]
-    }
-  }
+  # Standard Trust Relationship for Codepipeline
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "codepipeline.amazonaws.com"
+        }
+      },
+    ]
+  })
 }
 
+resource "aws_iam_role_policy_attachment" "pipeline_execution_role_attachment" {
+  role       = aws_iam_role.codepipeline.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSCodePipeline_FullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "build_execution_role_attachment_pipeline" {
+  role       = aws_iam_role.codepipeline.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSCodeBuildDeveloperAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "build_execution_role_attachment_deploy" {
+  role       = aws_iam_role.codepipeline.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployDeployerAccess"
+}
+
+# policy for codepipeline accessing s3
+resource "aws_iam_role_policy" "codepipeline_s3_access" {
+  name = "CodePipelineS3SourceAccess"
+  role = aws_iam_role.codepipeline.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:*",
+          "s3-object-lambda:*"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "codepipeline_codedeploy_policy" {
+  role = aws_iam_role.codepipeline.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "codedeploy:CreateDeployment",
+          "codedeploy:GetDeployment",
+          "codedeploy:GetDeploymentGroup",
+          "codedeploy:RegisterApplicationRevision",
+          "codedeploy:GetApplicationRevision"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecs:DescribeServices",
+          "ecs:DescribeTaskDefinition",
+          "ecs:UpdateService"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "elasticloadbalancing:DescribeListeners",
+          "elasticloadbalancing:DescribeLoadBalancers",
+          "elasticloadbalancing:DescribeTargetGroups",
+          "elasticloadbalancing:DescribeRules"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+
+######## ----- CodeBuild ----- #########
+resource "aws_iam_role" "codebuild" {
+  name = "codebuild_role"
+
+  # Standard Trust Relationship for Codebuild
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "codebuild.amazonaws.com"
+        }
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "build_execution_role_attachment" {
+  role       = aws_iam_role.codebuild.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSCodeBuildDeveloperAccess"
+}
+
+resource "aws_iam_role_policy" "codebuild_logs_access" {
+  name = "CodeBuildLogsAccess"
+  role = aws_iam_role.codebuild.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "tag:TagResource",
+          "tag:UntagResource",
+          "tag:GetResources",
+          "tag:GetTagKeys",
+          "tag:GetTagValues",
+
+          # Service-specific tagging
+          "s3:PutBucketTagging",
+          "s3:DeleteBucketagging",
+          "codebuild:TagResource",
+          "codepipeline:TagResource",
+          "codedeploy:TagResource",
+          "codedeploy:UntagResource",
+          "s3:*",
+          "s3-object-lambda:*",
+          "ecr:*",
+          "ecs:*"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+######## ----- CodeDeploy ----- #########
 resource "aws_iam_role" "codedeploy" {
-  name               = "codedeploy"
-  assume_role_policy = data.aws_iam_policy_document.assume_by_codedeploy.json
+  name = "codedeploy_role"
+
+  # Standard Trust Relationship for Codedeploy
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "codedeploy.amazonaws.com"
+        }
+      },
+    ]
+  })
 }
 
-data "aws_iam_policy_document" "codedeploy" {
-  statement {
-    sid    = "AllowLoadBalancingAndECSModifications"
-    effect = "Allow"
-
-    actions = [
-      "ecs:CreateTaskSet",
-      "ecs:DeleteTaskSet",
-      "ecs:DescribeServices",
-      "ecs:UpdateServicePrimaryTaskSet",
-      "elasticloadbalancing:DescribeListeners",
-      "elasticloadbalancing:DescribeRules",
-      "elasticloadbalancing:DescribeTargetGroups",
-      "elasticloadbalancing:ModifyListener",
-      "elasticloadbalancing:ModifyRule",
-      "s3:GetObject"
-    ]
-
-    resources = ["*"]
-  }
-  statement {
-    sid    = "AllowPassRole"
-    effect = "Allow"
-
-    actions = ["iam:PassRole"]
-
-    resources = [
-      aws_iam_role.ecsTaskExecutionRole.arn
-    ]
-  }
-
-  statement {
-    sid    = "DeployService"
-    effect = "Allow"
-
-    actions = ["ecs:DescribeServices",
-      "codedeploy:GetDeploymentGroup",
-      "codedeploy:CreateDeployment",
-      "codedeploy:GetDeployment",
-      "codedeploy:GetDeploymentConfig",
-    "codedeploy:RegisterApplicationRevision"]
-
-    resources = [
-      aws_ecs_service.tripmgmt_svc.id,
-      aws_codedeploy_deployment_group.frontend.arn,
-      aws_codedeploy_deployment_config.frontend.arn,
-      aws_codedeploy_app.frontend.arn
-    ]
-  }
+resource "aws_iam_role_policy_attachment" "deploy_execution_role_attachment" {
+  role       = aws_iam_role.codedeploy.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"
 }
 
-resource "aws_iam_role_policy" "codedeploy" {
-  role   = aws_iam_role.codedeploy.name
-  policy = data.aws_iam_policy_document.codedeploy.json
+resource "aws_iam_role_policy" "codedeploy_access" {
+  name = "CodeDeployAccess"
+  role = aws_iam_role.codedeploy.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:*",
+          "tag:*",
+          "s3:*",
+          "s3-object-lambda:*",
+          "ecr:*",
+          "ecs:*"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_s3_bucket_policy" "artifact_policy" {
+  bucket = aws_s3_bucket.source.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Sid : "AllowCodePipelineAndCodeDeployReadArtifacts",
+        Effect : "Allow",
+        Principal : {
+          AWS : [
+            aws_iam_role.codepipeline.arn,
+            aws_iam_role.codedeploy.arn
+          ]
+        },
+        Action : [
+          "s3:GetObject",
+          "s3:GetObjectVersion",
+          "s3:GetBucketLocation"
+        ],
+        Resource : [
+          "${aws_s3_bucket.source.arn}",
+          "${aws_s3_bucket.source.arn}/*"
+        ]
+      }
+    ]
+  })
 }
