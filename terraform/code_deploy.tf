@@ -1,11 +1,11 @@
 resource "aws_codedeploy_app" "frontend" {
-  name             = "frontend-deploy"
+  name             = var.codedeploy_app
   compute_platform = "ECS"
 }
 
 resource "aws_codedeploy_deployment_group" "frontend" {
   app_name               = aws_codedeploy_app.frontend.name
-  deployment_group_name  = "tripmgmt-deploy-group"
+  deployment_group_name  = var.deployment_group
   deployment_config_name = "CodeDeployDefault.ECSAllAtOnce"
   service_role_arn       = aws_iam_role.codedeploy.arn
 

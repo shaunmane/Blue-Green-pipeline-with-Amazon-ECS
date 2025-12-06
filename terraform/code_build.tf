@@ -1,5 +1,5 @@
 resource "aws_codebuild_project" "tripmgmt_build" {
-  name          = "tripmgmt-build"
+  name          = var.codebuild_project
   description   = "Builds and pushes Docker image for tripmgmt to ECR"
   service_role  = aws_iam_role.codebuild.arn
   build_timeout = 30

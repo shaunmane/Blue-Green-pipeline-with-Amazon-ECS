@@ -1,6 +1,6 @@
 # S3 bucket to store source artifacts
 resource "aws_s3_bucket" "source" {
-  bucket = "codepipeline-tripmgmt-bucket"
+  bucket = var.pipeline_bucket
 
   force_destroy = true
 }
@@ -113,11 +113,11 @@ resource "aws_codepipeline" "codepipeline" {
       input_artifacts = ["build_output"]
 
       configuration = {
-        ApplicationName              = aws_codedeploy_app.frontend.name
-        DeploymentGroupName          = aws_codedeploy_deployment_group.frontend.deployment_group_name
-        TaskDefinitionTemplateFile   = "taskdef.json"
-        AppSpecTemplateFile          = "appspec-template.yml"
-        ImageDefinitionsFile         = "imagedefinitions.json"
+        ApplicationName            = aws_codedeploy_app.frontend.name
+        DeploymentGroupName        = aws_codedeploy_deployment_group.frontend.deployment_group_name
+        TaskDefinitionTemplateFile = "taskdef.json"
+        AppSpecTemplateFile        = "appspec-template.yml"
+        ImageDefinitionsFile       = "imagedefinitions.json"
       }
     }
   }

@@ -119,7 +119,7 @@ resource "aws_iam_role_policy" "codepipeline_codedeploy_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
+        Effect = "Allow"
         Action = [
           "codedeploy:CreateDeployment",
           "codedeploy:GetDeployment",
