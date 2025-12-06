@@ -72,9 +72,33 @@ phases:
       - echo Creating imagedefinitions.json...
       - printf '[{"name":"tripmgmt","imageUri":"%s"}]' "$REPOSITORY_URI:$IMAGE_TAG" > imagedefinitions.json
 
+      - echo Creating taskdef.json...
+      - printf '{
+        "family": "%s",
+        "containerDefinitions": [
+          {
+            "name": "tripmgmt",
+            "image": "%s",
+            "essential": true,
+            "portMappings": [
+              {
+                "containerPort": 8080,
+                "hostPort": 8080
+              }
+            ]
+          }
+        ]
+      }' "$TASK_FAMILY" "$REPOSITORY_URI:$IMAGE_TAG" > taskdef.json
+      - sed -i "s|IMAGE_URI|$REPOSITORY_URI:$IMAGE_TAG|g" taskdef.json
+      - echo Creating appspec.yaml...
+      - echo Creating appspec.yaml...
+      - printf 'version: 1\nResources:\n  - TargetService:\n      Type: AWS::ECS::Service\n      Properties:\n        TaskDefinition: taskdef.json\n        LoadBalancerInfo:\n          ContainerName: "tripmgmt"\n          ContainerPort: 8080\n' > appspec.yaml
+
 artifacts:
   files:
     - imagedefinitions.json
+    - taskdef.json
+    - appspec.yaml
 EOF
   }
 

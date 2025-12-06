@@ -89,7 +89,7 @@ resource "aws_iam_role_policy_attachment" "build_execution_role_attachment_pipel
 
 resource "aws_iam_role_policy_attachment" "build_execution_role_attachment_deploy" {
   role       = aws_iam_role.codepipeline.name
-  policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployRoleForECS"
+  policy_arn = "arn:aws:iam::aws:policy/AWSCodeDeployDeployerAccess"
 }
 
 # policy for codepipeline accessing s3
@@ -111,6 +111,47 @@ resource "aws_iam_role_policy" "codepipeline_s3_access" {
     ]
   })
 }
+
+resource "aws_iam_role_policy" "codepipeline_codedeploy_policy" {
+  role = aws_iam_role.codepipeline.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action = [
+          "codedeploy:CreateDeployment",
+          "codedeploy:GetDeployment",
+          "codedeploy:GetDeploymentGroup",
+          "codedeploy:RegisterApplicationRevision",
+          "codedeploy:GetApplicationRevision"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecs:DescribeServices",
+          "ecs:DescribeTaskDefinition",
+          "ecs:UpdateService"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "elasticloadbalancing:DescribeListeners",
+          "elasticloadbalancing:DescribeLoadBalancers",
+          "elasticloadbalancing:DescribeTargetGroups",
+          "elasticloadbalancing:DescribeRules"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 
 ######## ----- CodeBuild ----- #########
 resource "aws_iam_role" "codebuild" {

@@ -105,16 +105,19 @@ resource "aws_codepipeline" "codepipeline" {
     name = "Deploy"
 
     action {
-      name            = "CodeDeploy"
+      name            = "DeployToECS"
       category        = "Deploy"
       owner           = "AWS"
-      provider        = "CodeDeploy"
+      provider        = "CodeDeployToECS"
       version         = "1"
       input_artifacts = ["build_output"]
 
       configuration = {
-        ApplicationName     = aws_codedeploy_app.frontend.name
-        DeploymentGroupName = "tripmgmt-deployment-config"
+        ApplicationName              = aws_codedeploy_app.frontend.name
+        DeploymentGroupName          = aws_codedeploy_deployment_group.frontend.deployment_group_name
+        TaskDefinitionTemplateFile   = "taskdef.json"
+        AppSpecTemplateFile          = "appspec-template.yml"
+        ImageDefinitionsFile         = "imagedefinitions.json"
       }
     }
   }
@@ -129,7 +132,7 @@ resource "aws_codepipeline_custom_action_type" "build" {
   }
 
   output_artifact_details {
-    maximum_count = 2
+    maximum_count = 3
     minimum_count = 0
   }
 
